@@ -142,3 +142,6 @@ def clear_all_data():
     data_store = load_data()  # Reset to initial empty state
     save_data()
     return {"message": "All game data cleared successfully"}
+@app.get("/")
+def home():
+    return {"message": "FastAPI backend is live 🚀"}
