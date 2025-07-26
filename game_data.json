@@ -1,0 +1,22 @@
+{
+  "Game1": {
+    "users": {},
+    "scores": [],
+    "user_counter": 0
+  },
+  "Game2": {
+    "users": {},
+    "scores": [],
+    "user_counter": 0
+  },
+  "Game3": {
+    "users": {},
+    "scores": [],
+    "user_counter": 0
+  },
+  "AR": {
+    "users": {},
+    "scores": [],
+    "user_counter": 0
+  }
+}
