@@ -1,9 +1,13 @@
 from fastapi import FastAPI, HTTPException, Body
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
 from pydantic import BaseModel, EmailStr, validator
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
+
 
 app = FastAPI()
 
@@ -145,3 +149,9 @@ def clear_all_data():
 @app.get("/")
 def home():
     return {"message": "FastAPI backend is live 🚀"}
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/admin", response_class=HTMLResponse)
+async def serve_admin(request: Request):
+    return templates.TemplateResponse("admin.html", {"request": request})
+

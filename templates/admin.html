@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game Admin Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Game Admin Dashboard</h1>
+    <div>
+        <label for="game-select">Select Game:</label>
+        <select id="game-select">
+            <option value="Game1">Game 1</option>
+            <option value="Game2">Game 2</option>
+            <option value="Game3">Game 3</option>
+            <option value="AR">AR</option>
+        </select>
+        <button id="load-data">Load Data</button>
+    </div>
+    <table id="users-table">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody id="users-body"></tbody>
+    </table>
+
+    <script>
+        function loadData(game) {
+            $.get(`https://ubikback-production.up.railway.app/${game.toLowerCase()}/get_data`, function(data) {
+ 
+                const tbody = $('#users-body');
+                tbody.empty();
+
+                data.users.forEach(user => {
+                    const score = user.score || user.scores.length > 0 ? Math.max(...user.scores) : "No Score";
+                    tbody.append(`
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.name || ''}</td>
+                            <td>${user.email || ''}</td>
+                            <td>${user.phone || ''}</td>
+                            <td>${score}</td>
+                        </tr>
+                    `);
+                });
+            }).fail(function() {
+                alert('Failed to load data. Ensure the server is running at http://localhost:8000.');
+            });
+        }
+
+        $('#load-data').on('click', function() {
+            const game = $('#game-select').val();
+            loadData(game);
+        });
+
+        // Load data for Game1 by default
+        $(document).ready(function() {
+            loadData('Game1');
+        });
+    </script>
+</body>
+</html>
