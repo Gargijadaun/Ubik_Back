@@ -16,68 +16,162 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 30px;
+        background-color: #f9fafb;
+        color: #333;
+    }
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-        }
+    h1 {
+        text-align: center;
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 40px;
+        color: #1f2937;
+    }
 
-        h1 {
-            margin-bottom: 25px;
-        }
+    .dashboard-card {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
 
+    .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 30px;
+        justify-content: space-between;
+    }
+
+    .control-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .controls label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .controls select,
+    .controls input[type="text"],
+    .controls input[type="date"] {
+        padding: 10px 14px;
+        font-size: 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        width: 200px;
+        background-color: #fff;
+        transition: border-color 0.2s ease-in-out;
+    }
+
+    .controls input:focus,
+    .controls select:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+
+    table.dataTable {
+        border-collapse: collapse !important;
+        width: 100%;
+        font-size: 14px;
+        background-color: #fff;
+    }
+
+    table.dataTable thead {
+        background-color: #f3f4f6;
+        color: #111827;
+    }
+
+    table.dataTable th,
+    table.dataTable td {
+        padding: 12px 15px;
+        text-align: left;
+    }
+
+    table.dataTable tbody tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    table.dataTable tbody tr:hover {
+        background-color: #e5e7eb;
+    }
+
+    .dataTables_wrapper .dt-buttons {
+        margin-bottom: 20px;
+    }
+
+    .dt-button {
+        background-color: #2563eb;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 13px;
+        margin-right: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .dt-button:hover {
+        background-color: #1d4ed8;
+    }
+
+    @media (max-width: 768px) {
         .controls {
-            display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 15px;
-            margin-bottom: 25px;
         }
 
-        label {
-            font-size: 14px;
-            font-weight: 500;
+        .controls select,
+        .controls input {
+            width: 100%;
         }
+    }
+</style>
 
-        select,
-        input[type="text"],
-        input[type="date"] {
-            padding: 6px 10px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-        .dataTables_wrapper .dt-buttons {
-            margin-bottom: 10px;
-        }
-    </style>
 </head>
 
 <body>
-    <h1>Ubik Admin Dashboard</h1>
+  <h1>Ubik Admin Dashboard</h1>
 
     <div class="dashboard-card">
         <div class="controls">
-            <label for="game-select">Select Game:</label>
-            <select id="game-select">
-                <option value="Game1">Skin Quiz</option>
-                <option value="Game2">Hair Quest</option>
-                <option value="Game3">Aging Quiz</option>
-                <option value="AR">AR</option>
-            </select>
+            <div class="control-group">
+                <label for="game-select">Select Game:</label>
+                <select id="game-select">
+                    <option value="Game1">Skin Quiz</option>
+                    <option value="Game2">Hair Quest</option>
+                    <option value="Game3">Aging Quiz</option>
+                    <option value="AR">AR</option>
+                </select>
+            </div>
 
-            <label for="filter-id">Filter by ID:</label>
-            <input type="text" id="filter-id" placeholder="User ID">
+            <div class="control-group">
+                <label for="filter-id">Filter by ID:</label>
+                <input type="text" id="filter-id" placeholder="User ID">
+            </div>
 
-            <label for="filter-name">Filter by Name:</label>
-            <input type="text" id="filter-name" placeholder="User Name">
+            <div class="control-group">
+                <label for="filter-name">Filter by Name:</label>
+                <input type="text" id="filter-name" placeholder="User Name">
+            </div>
 
-            <label for="start-date">Start Date:</label>
-            <input type="date" id="start-date">
+            <div class="control-group">
+                <label for="start-date">Start Date:</label>
+                <input type="date" id="start-date">
+            </div>
 
-            <label for="end-date">End Date:</label>
-            <input type="date" id="end-date">
+            <div class="control-group">
+                <label for="end-date">End Date:</label>
+                <input type="date" id="end-date">
+            </div>
         </div>
 
         <table id="users-table" class="display nowrap" style="width:100%">
