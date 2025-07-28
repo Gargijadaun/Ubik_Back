@@ -1,9 +1,8 @@
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Request, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from fastapi import Request
 from pydantic import BaseModel, EmailStr, validator, root_validator
-from typing import Optional
+from typing import Optional, List
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
@@ -59,35 +58,35 @@ class ScoreInput(BaseModel):
     def convert_to_string(cls, v):
         return str(v)
 
-@app.post(f"/{game_name.lower()}/save_user")
-def save_user(data: UserInput):
-    game = data_store[game_name]
+def register_game_routes(game_name: str):
+    @app.post(f"/{game_name.lower()}/save_user")
+    def save_user(data: UserInput):
+        game = data_store[game_name]
 
-    if "user_counter" not in game:
-        game["user_counter"] = 0
+        if "user_counter" not in game:
+            game["user_counter"] = 0
 
-    # Check for existing user
-    for uid, user in game["users"].items():
-        if user["phone"] == data.phone or (data.email and user["email"] == data.email):
-            return {"message": f"{game_name} user already exists", "player_id": uid}
+        # Check for existing user
+        for uid, user in game["users"].items():
+            if user["phone"] == data.phone or (data.email and user["email"] == data.email):
+                return {"message": f"{game_name} user already exists", "player_id": uid}
 
-    _id = str(game["user_counter"])
-    game["user_counter"] += 1
+        _id = str(game["user_counter"])
+        game["user_counter"] += 1
 
-    IST = timezone(timedelta(hours=5, minutes=30))  # ⏰ Indian Standard Time
+        IST = timezone(timedelta(hours=5, minutes=30))  # ⏰ IST timezone
 
-    game["users"][_id] = {
-        "id": _id,
-        "name": data.name,
-        "email": data.email,
-        "phone": data.phone,
-        "scores": [],
-        "created_at": datetime.now(IST).isoformat()
-    }
+        game["users"][_id] = {
+            "id": _id,
+            "name": data.name,
+            "email": data.email,
+            "phone": data.phone,
+            "scores": [],
+            "created_at": datetime.now(IST).isoformat()
+        }
 
-    save_data()
-    return {"message": f"{game_name} user saved", "player_id": _id}
-
+        save_data()
+        return {"message": f"{game_name} user saved", "player_id": _id}
 
     @app.patch(f"/{game_name.lower()}/save_score")
     def save_score(data: ScoreInput = Body(...)):
@@ -119,11 +118,30 @@ def save_user(data: UserInput):
         }
 
     @app.get(f"/{game_name.lower()}/get_data")
-    def get_data():
+    def get_data(
+        name: Optional[str] = Query(None),
+        player_id: Optional[str] = Query(None),
+        start_time: Optional[str] = Query(None),
+        end_time: Optional[str] = Query(None)
+    ):
         game = data_store[game_name]
         users = []
 
         for user in game["users"].values():
+            if name and name.lower() not in user["name"].lower():
+                continue
+            if player_id and user["id"] != player_id:
+                continue
+            if start_time or end_time:
+                created_at = datetime.fromisoformat(user["created_at"])
+                if start_time:
+                    start_dt = datetime.fromisoformat(start_time)
+                    if created_at < start_dt:
+                        continue
+                if end_time:
+                    end_dt = datetime.fromisoformat(end_time)
+                    if created_at > end_dt:
+                        continue
             user_copy = user.copy()
             user_copy["score"] = max(user["scores"]) if user["scores"] else "No Score"
             users.append(user_copy)
@@ -150,6 +168,10 @@ for game in ["Game1", "Game2", "Game3", "AR"]:
 def clear_all_data():
     global data_store
     data_store = load_data()
+    for game in data_store:
+        data_store[game]["users"] = {}
+        data_store[game]["scores"] = []
+        data_store[game]["user_counter"] = 0
     save_data()
     return {"message": "All game data cleared successfully"}
 
