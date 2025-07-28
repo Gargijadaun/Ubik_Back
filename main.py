@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
 
-
 app = FastAPI()
 
 # Enable CORS
@@ -62,12 +61,12 @@ def register_game_routes(game_name: str):
         if "user_counter" not in game:
             game["user_counter"] = 0
 
-        # ✅ Check if user already exists by phone or email
+        # ✅ Safe check if user exists by phone or email
         for uid, user in game["users"].items():
-            if user["phone"] == data.phone or (data.email and user["email"] == data.email):
+            if user["phone"] == data.phone or (data.email and user.get("email") == data.email):
                 return {"message": f"{game_name} user already exists", "player_id": uid}
 
-        # 🔍 Get fresh counter each time
+        # 🔍 Generate new user ID
         _id = str(game["user_counter"])
         game["user_counter"] += 1
 
@@ -85,7 +84,7 @@ def register_game_routes(game_name: str):
     @app.patch(f"/{game_name.lower()}/save_score")
     def save_score(data: ScoreInput = Body(...)):
         game = data_store[game_name]
-        player_id = data.player_id  # Already converted to string by validator
+        player_id = data.player_id
 
         if player_id not in game["users"]:
             raise HTTPException(status_code=404, detail="User not found")
@@ -95,7 +94,7 @@ def register_game_routes(game_name: str):
         score_entry = {
             "player_id": player_id,
             "username": user["name"],
-            "email": user["email"],
+            "email": user.get("email"),  # ✅ Safe access
             "phone": user["phone"],
             "finalScore": data.score
         }
@@ -118,6 +117,7 @@ def register_game_routes(game_name: str):
 
         for user in game["users"].values():
             user_copy = user.copy()
+            user_copy["email"] = user.get("email", "No email")  # ✅ Optional fallback
             user_copy["score"] = max(user["scores"]) if user["scores"] else "No Score"
             users.append(user_copy)
 
@@ -139,19 +139,25 @@ def register_game_routes(game_name: str):
 for game in ["Game1", "Game2", "Game3", "AR"]:
     register_game_routes(game)
 
-# Optional: Add endpoint to clear all games' data
 @app.delete("/clear_all_data")
 def clear_all_data():
     global data_store
-    data_store = load_data()  # Reset to initial empty state
+    data_store = {
+        "Game1": {"users": {}, "scores": [], "user_counter": 0},
+        "Game2": {"users": {}, "scores": [], "user_counter": 0},
+        "Game3": {"users": {}, "scores": [], "user_counter": 0},
+        "AR": {"users": {}, "scores": [], "user_counter": 0}
+    }
     save_data()
     return {"message": "All game data cleared successfully"}
+
 @app.get("/")
 def home():
     return {"message": "FastAPI backend is live 🚀"}
+
+# Admin template route
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/admin", response_class=HTMLResponse)
 async def serve_admin(request: Request):
     return templates.TemplateResponse("admin.html", {"request": request})
-
