@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Body
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 import json
@@ -42,16 +42,16 @@ data_store = load_data()
 # Models
 class UserInput(BaseModel):
     name: str
-    email: Optional[EmailStr] = None
+    email: Optional[EmailStr] = None  # Email is explicitly optional
     phone: str
 
 class ScoreInput(BaseModel):
-    player_id: str  # Must be a string
+    player_id: str
     score: int
 
     @validator('player_id', pre=True)
     def convert_to_string(cls, v):
-        return str(v)  # Convert input to string if it's not already
+        return str(v)
 
 def register_game_routes(game_name: str):
     @app.post(f"/{game_name.lower()}/save_user")
@@ -61,19 +61,20 @@ def register_game_routes(game_name: str):
         if "user_counter" not in game:
             game["user_counter"] = 0
 
-        # ✅ Safe check if user exists by phone or email
+        # Check if user exists by phone or email (if provided)
         for uid, user in game["users"].items():
             if user["phone"] == data.phone or (data.email and user.get("email") == data.email):
                 return {"message": f"{game_name} user already exists", "player_id": uid}
 
-        # 🔍 Generate new user ID
+        # Generate new user ID
         _id = str(game["user_counter"])
         game["user_counter"] += 1
 
+        # Store user data, ensuring email is None if not provided
         game["users"][_id] = {
             "id": _id,
             "name": data.name,
-            "email": data.email,
+            "email": data.email,  # Will be None if not provided
             "phone": data.phone,
             "scores": []
         }
@@ -94,7 +95,7 @@ def register_game_routes(game_name: str):
         score_entry = {
             "player_id": player_id,
             "username": user["name"],
-            "email": user.get("email"),  # ✅ Safe access
+            "email": user.get("email", None),  # Handle missing email
             "phone": user["phone"],
             "finalScore": data.score
         }
@@ -117,7 +118,7 @@ def register_game_routes(game_name: str):
 
         for user in game["users"].values():
             user_copy = user.copy()
-            user_copy["email"] = user.get("email", "No email")  # ✅ Optional fallback
+            user_copy["email"] = user.get("email", "No email")  # Fallback for display
             user_copy["score"] = max(user["scores"]) if user["scores"] else "No Score"
             users.append(user_copy)
 
