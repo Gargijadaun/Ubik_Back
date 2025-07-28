@@ -138,18 +138,19 @@
 
             $('#users-body').empty();
 
-            filtered.forEach(user => {
-                $('#users-body').append(`
-                    <tr>
-                        <td>${user.id}</td>
-                        <td>${user.name || ''}</td>
-                        <td>${user.email || ''}</td>
-                        <td>${user.phone || ''}</td>
-                        <td>${user.displayValue}</td>
-                        <td>${user.created_at ? user.created_at.toISOString().split('T')[0] : ''}</td>
-                    </tr>
-                `);
-            });
+          filtered.forEach(user => {
+    $('#users-body').append(`
+        <tr>
+            <td>${user.id}</td>
+            <td>${user.name || ''}</td>
+            <td>${user.email || ''}</td>
+            <td>${user.phone || ''}</td>
+            <td>${user.displayValue}</td>
+            <td>${user.created_at ? user.created_at.toLocaleString() : ''}</td>
+        </tr>
+    `);
+});
+
 
             dataTable = $('#users-table').DataTable({
                 dom: 'Bfrtip',
