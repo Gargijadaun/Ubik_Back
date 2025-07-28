@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Body
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 import json
@@ -49,9 +49,9 @@ class ScoreInput(BaseModel):
     player_id: str
     score: int
 
-    @validator('player_id', pre=True)
+    @field_validator('player_id', mode='before')
     def convert_to_string(cls, v):
-        return str(v)
+        return str(v)  # Convert input to string if it's not already
 
 def register_game_routes(game_name: str):
     @app.post(f"/{game_name.lower()}/save_user")
