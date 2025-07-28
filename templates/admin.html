@@ -2,71 +2,193 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Game Admin Dashboard</title>
+    <title>Ubik Admin Dashboard</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-card {
+            background-color: #fff;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-size: 16px;
+            color: #333;
+        }
+
+        select, input {
+            padding: 10px 16px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            overflow-x: auto;
+        }
+
+        th, td {
+            padding: 14px 18px;
+            text-align: left;
+            border: 1px solid #e0e0e0;
+            font-size: 15px;
+        }
+
+        th {
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tbody tr:hover {
+            background-color: #eef1f5;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            table, thead, tbody, th, td, tr {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Game Admin Dashboard</h1>
-    <div>
-        <label for="game-select">Select Game:</label>
-        <select id="game-select">
-            <option value="Game1">Game 1</option>
-            <option value="Game2">Game 2</option>
-            <option value="Game3">Game 3</option>
-            <option value="AR">AR</option>
-        </select>
-        <button id="load-data">Load Data</button>
+    <h1>Ubik Admin Dashboard</h1>
+
+    <div class="dashboard-card">
+        <div class="controls">
+            <label for="game-select">Select:</label>
+            <select id="game-select">
+                <option value="Game1">Skinquiz</option>
+                <option value="Game2">Hairquest</option>
+                <option value="Game3">Agingquiz</option>
+                <option value="AR">AR</option>
+            </select>
+
+            <label for="filter-id">Filter by ID:</label>
+            <input type="text" id="filter-id" placeholder="User ID">
+
+            <label for="filter-name">Filter by Name:</label>
+            <input type="text" id="filter-name" placeholder="User Name">
+        </div>
+
+        <table id="users-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th id="score-rating-header">Score</th>
+                </tr>
+            </thead>
+            <tbody id="users-body"></tbody>
+        </table>
     </div>
-    <table id="users-table">
-        <thead>
-            <tr>
-                <th>User ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Score</th>
-            </tr>
-        </thead>
-        <tbody id="users-body"></tbody>
-    </table>
 
     <script>
-        function loadData(game) {
-            $.get(`https://ubikback-production.up.railway.app/${game.toLowerCase()}/get_data`, function(data) {
- 
-                const tbody = $('#users-body');
-                tbody.empty();
+        let allUsers = [];
 
-                data.users.forEach(user => {
-                    const score = user.score || user.scores.length > 0 ? Math.max(...user.scores) : "No Score";
-                    tbody.append(`
-                        <tr>
-                            <td>${user.id}</td>
-                            <td>${user.name || ''}</td>
-                            <td>${user.email || ''}</td>
-                            <td>${user.phone || ''}</td>
-                            <td>${score}</td>
-                        </tr>
-                    `);
-                });
-            }).fail(function() {
-                alert('Failed to load data. Ensure the server is running at http://localhost:8000.');
+        function loadData(game) {
+            const isAR = game === 'AR';
+            $('#score-rating-header').text(isAR ? 'Rating' : 'Score');
+
+            $.get(`https://ubikback-production.up.railway.app/${game.toLowerCase()}/get_data`, function (data) {
+                allUsers = data.users.map(user => ({
+                    ...user,
+                    displayValue: isAR
+                        ? (user.rating || "No Rating")
+                        : (user.score || (user.scores && user.scores.length > 0 ? Math.max(...user.scores) : "No Score"))
+                }));
+                filterAndRender();
+            }).fail(function () {
+                alert('Failed to load data. Ensure the server is running.');
             });
         }
 
-        $('#load-data').on('click', function() {
-            const game = $('#game-select').val();
-            loadData(game);
+        function filterAndRender() {
+            const idFilter = $('#filter-id').val().toLowerCase();
+            const nameFilter = $('#filter-name').val().toLowerCase();
+
+            const filtered = allUsers.filter(user => {
+                const idMatch = user.id?.toString().toLowerCase().includes(idFilter);
+                const nameMatch = user.name?.toLowerCase().includes(nameFilter);
+                return idMatch && nameMatch;
+            });
+
+            const tbody = $('#users-body');
+            tbody.empty();
+
+            filtered.forEach(user => {
+                tbody.append(`
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.name || ''}</td>
+                        <td>${user.email || ''}</td>
+                        <td>${user.phone || ''}</td>
+                        <td>${user.displayValue}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        $('#game-select').on('change', function () {
+            loadData($(this).val());
         });
 
-        // Load data for Game1 by default
-        $(document).ready(function() {
-            loadData('Game1');
+        $('#filter-id, #filter-name').on('input', filterAndRender);
+
+        $(document).ready(function () {
+            loadData($('#game-select').val());
         });
     </script>
 </body>
