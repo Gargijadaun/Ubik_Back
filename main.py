@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 app = FastAPI()
 
@@ -59,33 +59,35 @@ class ScoreInput(BaseModel):
     def convert_to_string(cls, v):
         return str(v)
 
-def register_game_routes(game_name: str):
-    @app.post(f"/{game_name.lower()}/save_user")
-    def save_user(data: UserInput):
-        game = data_store[game_name]
+@app.post(f"/{game_name.lower()}/save_user")
+def save_user(data: UserInput):
+    game = data_store[game_name]
 
-        if "user_counter" not in game:
-            game["user_counter"] = 0
+    if "user_counter" not in game:
+        game["user_counter"] = 0
 
-        # Check for existing user
-        for uid, user in game["users"].items():
-            if user["phone"] == data.phone or (data.email and user["email"] == data.email):
-                return {"message": f"{game_name} user already exists", "player_id": uid}
+    # Check for existing user
+    for uid, user in game["users"].items():
+        if user["phone"] == data.phone or (data.email and user["email"] == data.email):
+            return {"message": f"{game_name} user already exists", "player_id": uid}
 
-        _id = str(game["user_counter"])
-        game["user_counter"] += 1
+    _id = str(game["user_counter"])
+    game["user_counter"] += 1
 
-        game["users"][_id] = {
-            "id": _id,
-            "name": data.name,
-            "email": data.email,
-            "phone": data.phone,
-            "scores": [],
-            "created_at": datetime.utcnow().isoformat()  # ✅ Added
-        }
+    IST = timezone(timedelta(hours=5, minutes=30))  # ⏰ Indian Standard Time
 
-        save_data()
-        return {"message": f"{game_name} user saved", "player_id": _id}
+    game["users"][_id] = {
+        "id": _id,
+        "name": data.name,
+        "email": data.email,
+        "phone": data.phone,
+        "scores": [],
+        "created_at": datetime.now(IST).isoformat()
+    }
+
+    save_data()
+    return {"message": f"{game_name} user saved", "player_id": _id}
+
 
     @app.patch(f"/{game_name.lower()}/save_score")
     def save_score(data: ScoreInput = Body(...)):

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Ubik Admin Dashboard</title>
@@ -38,7 +39,9 @@
             font-weight: 500;
         }
 
-        select, input[type="text"], input[type="date"] {
+        select,
+        input[type="text"],
+        input[type="date"] {
             padding: 6px 10px;
             font-size: 14px;
             border: 1px solid #ccc;
@@ -50,6 +53,7 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Ubik Admin Dashboard</h1>
 
@@ -138,18 +142,19 @@
 
             $('#users-body').empty();
 
-          filtered.forEach(user => {
-    $('#users-body').append(`
+            filtered.forEach(user => {
+                $('#users-body').append(`
         <tr>
             <td>${user.id}</td>
             <td>${user.name || ''}</td>
             <td>${user.email || ''}</td>
             <td>${user.phone || ''}</td>
             <td>${user.displayValue}</td>
-            <td>${user.created_at ? user.created_at.toLocaleString() : ''}</td>
+            <td>${user.created_at ? user.created_at.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : ''}</td>
         </tr>
     `);
-});
+            });
+
 
 
             dataTable = $('#users-table').DataTable({
@@ -175,4 +180,5 @@
         });
     </script>
 </body>
+
 </html>
