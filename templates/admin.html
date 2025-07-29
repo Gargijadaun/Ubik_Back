@@ -199,6 +199,23 @@
             </thead>
             <tbody id="users-body"></tbody>
         </table>
+        <h2 style="margin-top: 50px; font-size: 24px;">Doctor Activity Logs</h2>
+<table id="doctor-logs-table" class="display nowrap" style="width:100%">
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Doctor Variant</th>
+            <th>Activity</th>
+            <th>Patient Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Game</th>
+            <th>Score/Rating</th>
+        </tr>
+    </thead>
+    <tbody id="doctor-logs-body"></tbody>
+</table>
+
     </div>
 
     <script>
@@ -227,6 +244,7 @@
         allUsers = results.flat();
         $('#score-rating-header').text(selectedGame === 'AR' ? 'Rating' : 'Score');
         renderTable();
+         renderDoctorLogs();
     }).catch(() => {
         alert("Failed to load data from one or more sources. Is your local FastAPI server running?");
     });
@@ -285,6 +303,7 @@
                 loadData($(this).val());
             } else {
                 renderTable();
+                
             }
         });
 
@@ -292,6 +311,53 @@
         $(document).ready(function () {
             loadData($('#game-select').val());
         });
+
+        function renderDoctorLogs() {
+    const logs = [];
+
+    allUsers.forEach(user => {
+        if (user.variant && user.variant.toLowerCase().startsWith("doctor")) {
+            logs.push({
+                time: user.created_at,
+                variant: user.variant,
+                activity: "Played game",
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                game: user.game || "Unknown",
+                score: user.displayValue
+            });
+        }
+    });
+
+    if ($.fn.DataTable.isDataTable('#doctor-logs-table')) {
+        $('#doctor-logs-table').DataTable().clear().destroy();
+    }
+
+    $('#doctor-logs-body').empty();
+
+    logs.forEach(log => {
+        $('#doctor-logs-body').append(`
+            <tr>
+                <td>${log.time ? log.time.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : ''}</td>
+                <td>${log.variant}</td>
+                <td>${log.activity}</td>
+                <td>${log.name || ''}</td>
+                <td>${log.email || ''}</td>
+                <td>${log.phone || ''}</td>
+                <td>${log.game}</td>
+                <td>${log.score}</td>
+            </tr>
+        `);
+    });
+
+    $('#doctor-logs-table').DataTable({
+        dom: 'Bfrtip',
+        buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+        responsive: true
+    });
+}
+
     </script>
 </body>
 
