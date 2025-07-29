@@ -210,7 +210,7 @@
 
     let requests = games.map(game => {
         const isAR = game === 'AR';
-        return $.get(`https://ubikback-production.up.railway.app//${game.toLowerCase()}/get_data`)
+        return $.get(`https://ubikback-production.up.railway.app/${game.toLowerCase()}/get_data`)
             .then(data => {
                 return data.users.map(user => ({
                     ...user,
