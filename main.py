@@ -91,7 +91,8 @@ def register_game_routes(game_name: str):
                 "phone": data.phone,
                 "scores": [],
                 "variant": variant,
-                "created_at": datetime.now(IST).isoformat()
+                "created_at": datetime.now(IST).isoformat(),
+                "game": game_name  # 👈 Add this line
             }
 
             save_data()

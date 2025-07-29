@@ -16,6 +16,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 
     <style>
         body {
@@ -123,7 +125,25 @@
         .dt-button:hover {
             background-color: #1d4ed8;
         }
+ .variant-btn {
+        background-color: #e5e7eb;
+        border: none;
+        padding: 8px 14px;
+        margin-right: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-weight: 500;
+    }
 
+    .variant-btn:hover {
+        background-color: #d1d5db;
+    }
+
+    .variant-btn.active {
+        background-color: #2563eb;
+        color: white;
+    }
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -140,115 +160,131 @@
 
 <body>
     <h1>Ubik Admin Dashboard</h1>
-
+    <div style="text-align: center; margin-bottom: 20px;">
+        <button id="toggle-logs" class="dt-button">Show Doctor Logs</button>
+    </div>
     <div class="dashboard-card">
-        <div class="controls">
-            <div class="control-group">
-                <label for="game-select">Select:</label>
-                <select id="game-select">
-                    <option value="all">All</option>
-                    <option value="Game1">Skin Quiz</option>
-                    <option value="Game2">Hair Quest</option>
-                    <option value="Game3">Aging Quiz</option>
-                    <option value="AR">AR</option>
-                </select>
+        <!-- Wrapped Filters + Table -->
+        <div id="main-dashboard-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="game-select">Select:</label>
+                    <select id="game-select">
+                        <option value="all">All</option>
+                        <option value="Game1">Skin Quiz</option>
+                        <option value="Game2">Hair Quest</option>
+                        <option value="Game3">Aging Quiz</option>
+                        <option value="AR">AR</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="filter-id">Filter by ID:</label>
+                    <input type="text" id="filter-id" placeholder="User ID">
+                </div>
+
+                <div class="control-group">
+                    <label for="filter-name">Filter by Name:</label>
+                    <input type="text" id="filter-name" placeholder="User Name">
+                </div>
+
+                <div class="control-group">
+                    <label for="variant-filter">Variant:</label>
+                    <select id="variant-filter">
+                        <option value="">All</option>
+                        <option value="Main">Main</option>
+                        <option value="Doctor 1">Doctor 1</option>
+                        <option value="Doctor 2">Doctor 2</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="start-date">Start Date:</label>
+                    <input type="date" id="start-date">
+                </div>
+
+                <div class="control-group">
+                    <label for="end-date">End Date:</label>
+                    <input type="date" id="end-date">
+                </div>
+
+
             </div>
 
-            <div class="control-group">
-                <label for="filter-id">Filter by ID:</label>
-                <input type="text" id="filter-id" placeholder="User ID">
-            </div>
-
-            <div class="control-group">
-                <label for="filter-name">Filter by Name:</label>
-                <input type="text" id="filter-name" placeholder="User Name">
-            </div>
-
-            <div class="control-group">
-                <label for="variant-filter">Variant:</label>
-                <select id="variant-filter">
-                    <option value="">All</option>
-                    <option value="Main">Main</option>
-                    <option value="Doctor 1">Doctor 1</option>
-                    <option value="Doctor 2">Doctor 2</option>
-                </select>
-            </div>
-
-            <div class="control-group">
-                <label for="start-date">Start Date:</label>
-                <input type="date" id="start-date">
-            </div>
-
-            <div class="control-group">
-                <label for="end-date">End Date:</label>
-                <input type="date" id="end-date">
-            </div>
+            <table id="users-table" class="display nowrap" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th id="score-rating-header">Score</th>
+                        <th>Created At</th>
+                        <th>Doctor Variant</th>
+                    </tr>
+                </thead>
+                <tbody id="users-body"></tbody>
+            </table>
         </div>
 
-        <table id="users-table" class="display nowrap" style="width:100%">
-            <thead>
-                <tr>
-                    <th>User ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th id="score-rating-header">Score</th>
-                    <th>Created At</th>
-                    <th>Doctor Variant</th>
-                </tr>
-            </thead>
-            <tbody id="users-body"></tbody>
-        </table>
-        <h2 style="margin-top: 50px; font-size: 24px;">Doctor Activity Logs</h2>
-<table id="doctor-logs-table" class="display nowrap" style="width:100%">
-    <thead>
-        <tr>
-            <th>Time</th>
-            <th>Doctor Variant</th>
-            <th>Activity</th>
-            <th>Patient Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Game</th>
-            <th>Score/Rating</th>
-        </tr>
-    </thead>
-    <tbody id="doctor-logs-body"></tbody>
-</table>
+        <!-- Doctor Log Section -->
+        <div id="doctor-log-section" style="display: none; margin-top: 50px;">
+            <h2 style="font-size: 24px;">Doctor Activity Logs</h2>
+            <div id="doctor-controls" style="margin-bottom: 20px;">
+                <button class="variant-btn" data-variant="all">View All Logs</button>
+                <button class="variant-btn" data-variant="Doctor 1">View Doctor 1 Logs</button>
+                <button class="variant-btn" data-variant="Doctor 2">View Doctor 2 Logs</button>
+                <button class="variant-btn" data-variant="Main">View Main Logs</button>
+                <button id="download-logs" class="dt-button" style="margin-left: auto;">Download Logs</button>
 
+            </div>
+            <div id="doctor-logs-list"
+                style="white-space: pre-wrap; font-family: monospace; background: #f3f4f6; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto;">
+            </div>
+        </div>
     </div>
 
     <script>
         let allUsers = [];
         let dataTable;
 
-      function loadData(selectedGame) {
-    const games = selectedGame === "all" ? ["Game1", "Game2", "Game3", "AR"] : [selectedGame];
+        function loadData(selectedGame) {
+            const games = selectedGame === "all" ? ["Game1", "Game2", "Game3", "AR"] : [selectedGame];
 
-    let requests = games.map(game => {
-        const isAR = game === 'AR';
-        return $.get(`https://ubikback-production.up.railway.app/${game.toLowerCase()}/get_data`)
-            .then(data => {
-                return data.users.map(user => ({
-                    ...user,
-                    displayValue: isAR
-                        ? (user.rating || "No Rating")
-                        : (user.score || (user.scores && user.scores.length > 0 ? Math.max(...user.scores) : "No Score")),
-                    created_at: user.created_at ? new Date(user.created_at) : null,
-                    variant: user.variant || "Main"
-                }));
+            let requests = games.map(game => {
+                const isAR = game === 'AR';
+                // Map internal game codes to readable names
+                const gameNames = {
+                    Game1: "Skin Quiz",
+                    Game2: "Hair Quest",
+                    Game3: "Aging Quiz",
+                    AR: "AR"
+                };
+
+                return $.get(`https://ubikback-production.up.railway.app/${game.toLowerCase()}/get_data`)
+                    .then(data => {
+                        return data.users.map(user => ({
+                            ...user,
+                            game: gameNames[game] || game, // Use human-readable name
+
+                            displayValue: isAR
+                                ? (user.rating || "No Rating")
+                                : (user.score || (user.scores && user.scores.length > 0 ? Math.max(...user.scores) : "No Score")),
+                            created_at: user.created_at ? new Date(user.created_at) : null,
+                            variant: user.variant || "Main"
+                        }));
+                    });
             });
-    });
 
-    Promise.all(requests).then(results => {
-        allUsers = results.flat();
-        $('#score-rating-header').text(selectedGame === 'AR' ? 'Rating' : 'Score');
-        renderTable();
-         renderDoctorLogs();
-    }).catch(() => {
-        alert("Failed to load data from one or more sources. Is your local FastAPI server running?");
-    });
-}
+            Promise.all(requests).then(results => {
+                allUsers = results.flat();
+                $('#score-rating-header').text(selectedGame === 'AR' ? 'Rating' : 'Score');
+                renderTable();
+                renderDoctorLogs();
+            }).catch(() => {
+                alert("Failed to load data from one or more sources. Is your local FastAPI server running?");
+            });
+        }
 
         function renderTable() {
             const idFilter = $('#filter-id').val().toLowerCase();
@@ -297,67 +333,93 @@
             });
         }
 
-        // Event listeners
-        $('#game-select, #filter-id, #filter-name, #start-date, #end-date, #variant-filter').on('input change', function () {
-            if (this.id === 'game-select') {
-                loadData($(this).val());
-            } else {
-                renderTable();
-                
-            }
-        });
+        function renderDoctorLogs(selectedVariant = "all") {
+            const logs = [];
 
-        // Initial load
+            allUsers.forEach(user => {
+                if (user.variant && (selectedVariant === "all" || user.variant === selectedVariant)) {
+                    logs.push({
+                        time: user.created_at,
+                        variant: user.variant,
+                        activity: "Played game",
+                        name: user.name,
+                        email: user.email,
+                        phone: user.phone,
+                        game: user.game || "Unknown",
+                        score: user.displayValue
+                    });
+                }
+            });
+
+            let logOutput = "";
+
+            logs.sort((a, b) => b.time - a.time).forEach(log => {
+                logOutput += `🕒 [${log.time ? log.time.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : 'Unknown'}] - 👨‍⚕️ ${log.variant}
+Patient: ${log.name || 'N/A'} | Email: ${log.email || 'N/A'} | Phone: ${log.phone || 'N/A'}
+Game: ${log.game} | Score: ${log.score || 'N/A'}
+--------------------------------------------------\n`;
+            });
+
+            $('#doctor-logs-list').text(logOutput || "No logs found.");
+        }
+
         $(document).ready(function () {
             loadData($('#game-select').val());
-        });
 
-        function renderDoctorLogs() {
-    const logs = [];
-
-    allUsers.forEach(user => {
-        if (user.variant && user.variant.toLowerCase().startsWith("doctor")) {
-            logs.push({
-                time: user.created_at,
-                variant: user.variant,
-                activity: "Played game",
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                game: user.game || "Unknown",
-                score: user.displayValue
+            $('#game-select, #filter-id, #filter-name, #start-date, #end-date, #variant-filter').on('input change', function () {
+                if (this.id === 'game-select') {
+                    loadData($(this).val());
+                } else {
+                    renderTable();
+                }
             });
-        }
+
+         $(document).on('click', '.variant-btn', function () {
+    const selectedVariant = $(this).data('variant');
+    renderDoctorLogs(selectedVariant);
+
+    // Highlight selected
+    $('.variant-btn').removeClass('active');
+    $(this).addClass('active');
+});
+
+
+
+            $('#toggle-logs').on('click', function () {
+                const section = $('#doctor-log-section');
+                const dashboardContent = $('#main-dashboard-content');
+                const isVisible = section.is(':visible');
+
+                // Toggle visibility
+                section.toggle(!isVisible);
+                dashboardContent.toggle(isVisible);
+
+                // Change button text
+                $(this).text(isVisible ? 'Show Doctor Logs' : 'Back to Dashboard');
+
+                // Optionally scroll to top if showing logs
+                if (!isVisible) {
+                    renderDoctorLogs();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+
+        });
+         window.addEventListener('DOMContentLoaded', function () {
+        $('#download-logs').on('click', async function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const text = $('#doctor-logs-list').text().trim();
+            const lines = doc.splitTextToSize(text, 180); // Wrap text within page width
+
+            doc.setFontSize(12);
+            doc.text(lines, 10, 20); // (text, x, y)
+
+            const filename = `doctor_logs_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+        });
     });
-
-    if ($.fn.DataTable.isDataTable('#doctor-logs-table')) {
-        $('#doctor-logs-table').DataTable().clear().destroy();
-    }
-
-    $('#doctor-logs-body').empty();
-
-    logs.forEach(log => {
-        $('#doctor-logs-body').append(`
-            <tr>
-                <td>${log.time ? log.time.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : ''}</td>
-                <td>${log.variant}</td>
-                <td>${log.activity}</td>
-                <td>${log.name || ''}</td>
-                <td>${log.email || ''}</td>
-                <td>${log.phone || ''}</td>
-                <td>${log.game}</td>
-                <td>${log.score}</td>
-            </tr>
-        `);
-    });
-
-    $('#doctor-logs-table').DataTable({
-        dom: 'Bfrtip',
-        buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
-        responsive: true
-    });
-}
-
     </script>
 </body>
 
