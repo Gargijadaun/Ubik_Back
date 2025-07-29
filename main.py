@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Body, Request, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel, EmailStr, validator, root_validator
-from typing import Optional, List
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
+from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
@@ -38,13 +38,14 @@ def save_data():
 
 data_store = load_data()
 
-# Models
+# Pydantic Models
 class UserInput(BaseModel):
     name: str
     email: Optional[EmailStr] = None
     phone: str
 
-    @root_validator(pre=True)
+    @model_validator(mode='before')
+    @classmethod
     def empty_string_to_none(cls, values):
         if "email" in values and values["email"] == "":
             values["email"] = None
@@ -54,102 +55,120 @@ class ScoreInput(BaseModel):
     player_id: str
     score: int
 
-    @validator('player_id', pre=True)
+    @field_validator('player_id', mode='before')
+    @classmethod
     def convert_to_string(cls, v):
         return str(v)
 
+# Register dynamic game routes
 def register_game_routes(game_name: str):
-    @app.post(f"/{game_name.lower()}/save_user")
-    def save_user(data: UserInput):
-        game = data_store[game_name]
 
-        if "user_counter" not in game:
-            game["user_counter"] = 0
+    def create_user_route(prefix: str = ""):
+        @app.post(f"/{game_name.lower()}/{prefix}save_user")
+        def save_user(data: UserInput):
+            game = data_store[game_name]
+            if "user_counter" not in game:
+                game["user_counter"] = 0
 
-        # Check for existing user
-        for uid, user in game["users"].items():
-            if user["phone"] == data.phone or (data.email and user["email"] == data.email):
-                return {"message": f"{game_name} user already exists", "player_id": uid}
+            for uid, user in game["users"].items():
+                if user["phone"] == data.phone or (data.email and user["email"] == data.email):
+                    return {"message": f"{game_name} user already exists", "player_id": uid}
 
-        _id = str(game["user_counter"])
-        game["user_counter"] += 1
+            _id = str(game["user_counter"])
+            game["user_counter"] += 1
 
-        IST = timezone(timedelta(hours=5, minutes=30))  # ⏰ IST timezone
+            IST = timezone(timedelta(hours=5, minutes=30))
+            variant = (
+                "Doctor 1" if prefix == "doctor1/" else
+                "Doctor 2" if prefix == "doctor2/" else
+                "Main"
+            )
 
-        game["users"][_id] = {
-            "id": _id,
-            "name": data.name,
-            "email": data.email,
-            "phone": data.phone,
-            "scores": [],
-            "created_at": datetime.now(IST).isoformat()
-        }
+            game["users"][_id] = {
+                "id": _id,
+                "name": data.name,
+                "email": data.email,
+                "phone": data.phone,
+                "scores": [],
+                "variant": variant,
+                "created_at": datetime.now(IST).isoformat()
+            }
 
-        save_data()
-        return {"message": f"{game_name} user saved", "player_id": _id}
+            save_data()
+            return {"message": f"{game_name} user saved", "player_id": _id}
 
-    @app.patch(f"/{game_name.lower()}/save_score")
-    def save_score(data: ScoreInput = Body(...)):
-        game = data_store[game_name]
-        player_id = data.player_id
+    def create_score_route(prefix: str = ""):
+        @app.patch(f"/{game_name.lower()}/{prefix}save_score")
+        def save_score(data: ScoreInput = Body(...)):
+            game = data_store[game_name]
+            player_id = data.player_id
 
-        if player_id not in game["users"]:
-            raise HTTPException(status_code=404, detail="User not found")
+            if player_id not in game["users"]:
+                raise HTTPException(status_code=404, detail="User not found")
 
-        user = game["users"][player_id]
+            user = game["users"][player_id]
+            score_entry = {
+                "player_id": player_id,
+                "username": user["name"],
+                "email": user["email"],
+                "phone": user["phone"],
+                "finalScore": data.score
+            }
 
-        score_entry = {
-            "player_id": player_id,
-            "username": user["name"],
-            "email": user["email"],
-            "phone": user["phone"],
-            "finalScore": data.score
-        }
+            game["scores"].append(score_entry)
+            user["scores"].append(data.score)
 
-        game["scores"].append(score_entry)
-        user["scores"].append(data.score)
+            save_data()
+            return {
+                "message": f"{game_name} score saved",
+                "score": score_entry,
+                "updated_user_scores": user["scores"]
+            }
 
-        save_data()
+    def create_get_data_route(prefix: str = ""):
+        @app.get(f"/{game_name.lower()}/{prefix}get_data")
+        def get_data(
+            name: Optional[str] = Query(None),
+            player_id: Optional[str] = Query(None),
+            start_time: Optional[str] = Query(None),
+            end_time: Optional[str] = Query(None)
+        ):
+            game = data_store[game_name]
+            users = []
 
-        return {
-            "message": f"{game_name} score saved",
-            "score": score_entry,
-            "updated_user_scores": user["scores"]
-        }
-
-    @app.get(f"/{game_name.lower()}/get_data")
-    def get_data(
-        name: Optional[str] = Query(None),
-        player_id: Optional[str] = Query(None),
-        start_time: Optional[str] = Query(None),
-        end_time: Optional[str] = Query(None)
-    ):
-        game = data_store[game_name]
-        users = []
-
-        for user in game["users"].values():
-            if name and name.lower() not in user["name"].lower():
-                continue
-            if player_id and user["id"] != player_id:
-                continue
-            if start_time or end_time:
-                created_at = datetime.fromisoformat(user["created_at"])
-                if start_time:
-                    start_dt = datetime.fromisoformat(start_time)
-                    if created_at < start_dt:
+            for user in game["users"].values():
+                if name and name.lower() not in user["name"].lower():
+                    continue
+                if player_id and user["id"] != player_id:
+                    continue
+                if start_time or end_time:
+                    try:
+                        created_at = datetime.fromisoformat(user["created_at"])
+                    except ValueError:
                         continue
-                if end_time:
-                    end_dt = datetime.fromisoformat(end_time)
-                    if created_at > end_dt:
-                        continue
-            user_copy = user.copy()
-            user_copy["score"] = max(user["scores"]) if user["scores"] else "No Score"
-            users.append(user_copy)
+                    if start_time:
+                        start_dt = datetime.fromisoformat(start_time)
+                        if created_at < start_dt:
+                            continue
+                    if end_time:
+                        end_dt = datetime.fromisoformat(end_time)
+                        if created_at > end_dt:
+                            continue
+                user_copy = user.copy()
+                user_copy["score"] = max(user["scores"]) if user["scores"] else "No Score"
+                if "variant" not in user_copy:
+                    user_copy["variant"] = "Main"
+                users.append(user_copy)
 
-        return {
-            "users": users,
-            "scores": game["scores"]
-        }
+            return {
+                "users": users,
+                "scores": game["scores"]
+            }
+
+    for prefix in ["", "doctor1/", "doctor2/"]:
+        create_user_route(prefix)
+        create_score_route(prefix)
+        create_get_data_route(prefix)
 
     @app.delete(f"/{game_name.lower()}/clear_data")
     def clear_data():
