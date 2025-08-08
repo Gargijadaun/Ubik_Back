@@ -54,6 +54,23 @@ class UserInput(BaseModel):
 class ScoreInput(BaseModel):
     player_id: str
     score: int
+    discount: Optional[float] = None
+
+    @field_validator('player_id', mode='before')
+    @classmethod
+    def convert_to_string(cls, v):
+        return str(v)
+
+    @field_validator('discount')
+    @classmethod
+    def validate_discount(cls, v):
+        if v is not None and (v < 0 or v > 100):
+            raise ValueError("Discount must be between 0 and 100")
+        return v
+
+class ARScoreInput(BaseModel):
+    player_id: str
+    score: int
 
     @field_validator('player_id', mode='before')
     @classmethod
@@ -62,7 +79,6 @@ class ScoreInput(BaseModel):
 
 # Register dynamic game routes
 def register_game_routes(game_name: str):
-
     def create_user_route(prefix: str = ""):
         @app.post(f"/{game_name.lower()}/{prefix}save_user")
         def save_user(data: UserInput):
@@ -92,15 +108,18 @@ def register_game_routes(game_name: str):
                 "scores": [],
                 "variant": variant,
                 "created_at": datetime.now(IST).isoformat(),
-                "game": game_name  # 👈 Add this line
+                "game": game_name
             }
 
             save_data()
             return {"message": f"{game_name} user saved", "player_id": _id}
 
     def create_score_route(prefix: str = ""):
+        # Use ARScoreInput for AR game, ScoreInput for others
+        score_model = ARScoreInput if game_name == "AR" else ScoreInput
+
         @app.patch(f"/{game_name.lower()}/{prefix}save_score")
-        def save_score(data: ScoreInput = Body(...)):
+        def save_score(data: score_model = Body(...)):
             game = data_store[game_name]
             player_id = data.player_id
 
@@ -116,8 +135,16 @@ def register_game_routes(game_name: str):
                 "finalScore": data.score
             }
 
+            # Include discount in score_entry only for non-AR games if provided
+            if game_name != "AR" and hasattr(data, "discount") and data.discount is not None:
+                score_entry["discount"] = data.discount
+
             game["scores"].append(score_entry)
-            user["scores"].append(data.score)
+            # Store score in user scores
+            user_score = {"score": data.score}
+            if game_name != "AR" and hasattr(data, "discount") and data.discount is not None:
+                user_score["discount"] = data.discount
+            user["scores"].append(user_score)
 
             save_data()
             return {
@@ -156,7 +183,13 @@ def register_game_routes(game_name: str):
                         if created_at > end_dt:
                             continue
                 user_copy = user.copy()
-                user_copy["score"] = max(user["scores"]) if user["scores"] else "No Score"
+                if user["scores"]:
+                    if isinstance(user["scores"][0], dict):
+                        user_copy["score"] = max([s["score"] for s in user["scores"]])
+                    else:
+                        user_copy["score"] = max(user["scores"])
+                else:
+                    user_copy["score"] = "No Score"
                 if "variant" not in user_copy:
                     user_copy["variant"] = "Main"
                 users.append(user_copy)

@@ -1,8 +1,91 @@
 {
   "Game1": {
-    "users": {},
-    "scores": [],
-    "user_counter": 0
+    "users": {
+      "0": {
+        "id": "0",
+        "name": "Jad",
+        "email": "gargi@metaverse911.rs",
+        "phone": "875059440",
+        "scores": [
+          {
+            "score": 34,
+            "discount": 0.0
+          }
+        ],
+        "variant": "Doctor 2",
+        "created_at": "2025-08-05T22:10:00.121142+05:30",
+        "game": "Game1"
+      },
+      "1": {
+        "id": "1",
+        "name": "uuu",
+        "email": "UUU@gmail.com",
+        "phone": "1123324345",
+        "scores": [
+          {
+            "score": 67,
+            "discount": 0.0
+          },
+          {
+            "score": 67,
+            "discount": 0.0
+          }
+        ],
+        "variant": "Doctor 2",
+        "created_at": "2025-08-05T22:18:50.505336+05:30",
+        "game": "Game1"
+      },
+      "2": {
+        "id": "2",
+        "name": "jalappath",
+        "email": null,
+        "phone": "5456776789",
+        "scores": [
+          {
+            "score": 100,
+            "discount": 0.0
+          }
+        ],
+        "variant": "Doctor 2",
+        "created_at": "2025-08-05T22:25:49.342668+05:30",
+        "game": "Game1"
+      }
+    },
+    "scores": [
+      {
+        "player_id": "0",
+        "username": "Jad",
+        "email": "gargi@metaverse911.rs",
+        "phone": "875059440",
+        "finalScore": 34,
+        "discount": 0.0
+      },
+      {
+        "player_id": "1",
+        "username": "uuu",
+        "email": "UUU@gmail.com",
+        "phone": "1123324345",
+        "finalScore": 67,
+        "discount": 0.0
+      },
+      {
+        "player_id": "1",
+        "username": "uuu",
+        "email": "UUU@gmail.com",
+        "phone": "1123324345",
+        "finalScore": 67,
+        "discount": 0.0
+      },
+      {
+        "player_id": "2",
+        "username": "jalappath",
+        "email": null,
+        "phone": "5456776789",
+        "finalScore": 100,
+        "discount": 0.0
+      }
+    ],
+    "user_counter": 3
   },
   "Game2": {
     "users": {},

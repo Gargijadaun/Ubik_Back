@@ -18,7 +18,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -125,25 +124,27 @@
         .dt-button:hover {
             background-color: #1d4ed8;
         }
- .variant-btn {
-        background-color: #e5e7eb;
-        border: none;
-        padding: 8px 14px;
-        margin-right: 8px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        font-weight: 500;
-    }
 
-    .variant-btn:hover {
-        background-color: #d1d5db;
-    }
+        .variant-btn {
+            background-color: #e5e7eb;
+            border: none;
+            padding: 8px 14px;
+            margin-right: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
 
-    .variant-btn.active {
-        background-color: #2563eb;
-        color: white;
-    }
+        .variant-btn:hover {
+            background-color: #d1d5db;
+        }
+
+        .variant-btn.active {
+            background-color: #2563eb;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -207,18 +208,17 @@
                     <label for="end-date">End Date:</label>
                     <input type="date" id="end-date">
                 </div>
-
-
             </div>
 
             <table id="users-table" class="display nowrap" style="width:100%">
-                <thead>
+                <thead id="users-table-head">
                     <tr>
                         <th>User ID</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        <th id="score-rating-header">Score</th>
+                        <th id="score-rating-header">Score/Rating</th>
+                        <th id="discount-header">Discount (%)</th>
                         <th>Created At</th>
                         <th>Doctor Variant</th>
                     </tr>
@@ -236,24 +236,39 @@
                 <button class="variant-btn" data-variant="Doctor 2">View Doctor 2 Logs</button>
                 <button class="variant-btn" data-variant="Main">View Main Logs</button>
                 <button id="download-logs" class="dt-button" style="margin-left: auto;">Download Logs</button>
-
             </div>
-            <div id="doctor-logs-list"
-                style="white-space: pre-wrap; font-family: monospace; background: #f3f4f6; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto;">
-            </div>
+            <table id="doctor-logs-table" class="display nowrap" style="width:100%">
+                <thead id="doctor-logs-table-head">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Variant</th>
+                        <th>Activity</th>
+                        <th>Patient</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Game</th>
+                        <th>Score</th>
+                        <th id="doctor-discount-header">Discount</th>
+                    </tr>
+                </thead>
+                <tbody id="doctor-logs-body"></tbody>
+            </table>
         </div>
     </div>
 
     <script>
         let allUsers = [];
         let dataTable;
+        let doctorLogsTable;
+        let isARSelected = false;
 
         function loadData(selectedGame) {
+            isARSelected = selectedGame === "AR";
             const games = selectedGame === "all" ? ["Game1", "Game2", "Game3", "AR"] : [selectedGame];
+            const BASE_URL = 'http://127.0.0.1:8000';
 
             let requests = games.map(game => {
                 const isAR = game === 'AR';
-                // Map internal game codes to readable names
                 const gameNames = {
                     Game1: "Skin Quiz",
                     Game2: "Hair Quest",
@@ -261,15 +276,23 @@
                     AR: "AR"
                 };
 
-                return $.get(`https://ubikback-production.up.railway.app/${game.toLowerCase()}/get_data`)
+                return $.get(`${BASE_URL}/${game.toLowerCase()}/get_data`)
                     .then(data => {
                         return data.users.map(user => ({
                             ...user,
-                            game: gameNames[game] || game, // Use human-readable name
-
+                            game: gameNames[game] || game,
                             displayValue: isAR
                                 ? (user.rating || "No Rating")
-                                : (user.score || (user.scores && user.scores.length > 0 ? Math.max(...user.scores) : "No Score")),
+                                : (user.score || (user.scores && user.scores.length > 0 
+                                    ? Math.max(...user.scores.map(s => typeof s === 'number' ? s : s.score)) 
+                                    : "No Score")),
+                            discount: isAR ? "N/A" : (user.scores && user.scores.length > 0 
+                                ? (typeof user.scores[user.scores.length - 1] === 'number' 
+                                    ? "No Discount" 
+                                    : (user.scores[user.scores.length - 1].discount != null 
+                                        ? user.scores[user.scores.length - 1].discount + "%" 
+                                        : "No Discount"))
+                                : "No Discount"),
                             created_at: user.created_at ? new Date(user.created_at) : null,
                             variant: user.variant || "Main"
                         }));
@@ -291,7 +314,7 @@
             const nameFilter = $('#filter-name').val().toLowerCase();
             const variantFilter = $('#variant-filter').val();
             const startDate = $('#start-date').val() ? new Date($('#start-date').val()) : null;
-            const endDate = $('#end-date').val() ? new Date($('#end-date').val()) : null;
+            const endDate = $('#end-date').val() ? new Date(new Date($('#end-date').val()).setHours(23, 59, 59, 999)) : null;
 
             const filtered = allUsers.filter(user => {
                 const idMatch = user.id?.toString().toLowerCase().includes(idFilter);
@@ -306,9 +329,25 @@
                 return idMatch && nameMatch && variantMatch && dateMatch;
             });
 
+            filtered.sort((a, b) => (b.created_at || new Date(0)) - (a.created_at || new Date(0)));
+
             if ($.fn.DataTable.isDataTable('#users-table')) {
                 $('#users-table').DataTable().clear().destroy();
             }
+
+            $('#users-table-head').empty();
+            $('#users-table-head').append(`
+                <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th id="score-rating-header">${isARSelected ? 'Rating' : 'Score'}</th>
+                    ${isARSelected ? '' : '<th id="discount-header">Discount (%)</th>'}
+                    <th>Created At</th>
+                    <th>Doctor Variant</th>
+                </tr>
+            `);
 
             $('#users-body').empty();
 
@@ -320,6 +359,7 @@
                         <td>${user.email || ''}</td>
                         <td>${user.phone || ''}</td>
                         <td>${user.displayValue}</td>
+                        ${isARSelected ? '' : `<td>${user.discount}</td>`}
                         <td>${user.created_at ? user.created_at.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : ''}</td>
                         <td>${user.variant}</td>
                     </tr>
@@ -329,12 +369,14 @@
             dataTable = $('#users-table').DataTable({
                 dom: 'Bfrtip',
                 buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
-                responsive: true
+                responsive: true,
+                order: [[isARSelected ? 5 : 6, 'desc']] // Adjust sort column based on discount presence
             });
         }
 
         function renderDoctorLogs(selectedVariant = "all") {
             const logs = [];
+            const isARVariant = selectedVariant !== "all" && allUsers.some(user => user.variant === selectedVariant && user.game === "AR");
 
             allUsers.forEach(user => {
                 if (user.variant && (selectedVariant === "all" || user.variant === selectedVariant)) {
@@ -342,25 +384,61 @@
                         time: user.created_at,
                         variant: user.variant,
                         activity: "Played game",
-                        name: user.name,
-                        email: user.email,
-                        phone: user.phone,
+                        name: user.name || 'N/A',
+                        email: user.email || 'N/A',
+                        phone: user.phone || 'N/A',
                         game: user.game || "Unknown",
-                        score: user.displayValue
+                        score: user.displayValue || 'N/A',
+                        discount: user.discount || 'N/A'
                     });
                 }
             });
 
-            let logOutput = "";
+            logs.sort((a, b) => (b.time || new Date(0)) - (a.time || new Date(0)));
 
-            logs.sort((a, b) => b.time - a.time).forEach(log => {
-                logOutput += `🕒 [${log.time ? log.time.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : 'Unknown'}] - 👨‍⚕️ ${log.variant}
-Patient: ${log.name || 'N/A'} | Email: ${log.email || 'N/A'} | Phone: ${log.phone || 'N/A'}
-Game: ${log.game} | Score: ${log.score || 'N/A'}
---------------------------------------------------\n`;
+            if ($.fn.DataTable.isDataTable('#doctor-logs-table')) {
+                $('#doctor-logs-table').DataTable().clear().destroy();
+            }
+
+            $('#doctor-logs-table-head').empty();
+            $('#doctor-logs-table-head').append(`
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Variant</th>
+                    <th>Activity</th>
+                    <th>Patient</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Game</th>
+                    <th>Score</th>
+                    ${isARSelected || isARVariant ? '' : '<th id="doctor-discount-header">Discount</th>'}
+                </tr>
+            `);
+
+            $('#doctor-logs-body').empty();
+
+            logs.forEach(log => {
+                $('#doctor-logs-body').append(`
+                    <tr>
+                        <td>${log.time ? log.time.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : 'N/A'}</td>
+                        <td>${log.variant}</td>
+                        <td>${log.activity}</td>
+                        <td>${log.name}</td>
+                        <td>${log.email}</td>
+                        <td>${log.phone}</td>
+                        <td>${log.game}</td>
+                        <td>${log.score}</td>
+                        ${isARSelected || isARVariant ? '' : `<td>${log.discount}</td>`}
+                    </tr>
+                `);
             });
 
-            $('#doctor-logs-list').text(logOutput || "No logs found.");
+            doctorLogsTable = $('#doctor-logs-table').DataTable({
+                dom: 'Bfrtip',
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                responsive: true,
+                order: [[0, 'desc']]
+            });
         }
 
         $(document).ready(function () {
@@ -374,52 +452,60 @@ Game: ${log.game} | Score: ${log.score || 'N/A'}
                 }
             });
 
-         $(document).on('click', '.variant-btn', function () {
-    const selectedVariant = $(this).data('variant');
-    renderDoctorLogs(selectedVariant);
+            $(document).on('click', '.variant-btn', function () {
+                const selectedVariant = $(this).data('variant');
+                renderDoctorLogs(selectedVariant);
 
-    // Highlight selected
-    $('.variant-btn').removeClass('active');
-    $(this).addClass('active');
-});
-
-
+                $('.variant-btn').removeClass('active');
+                $(this).addClass('active');
+            });
 
             $('#toggle-logs').on('click', function () {
                 const section = $('#doctor-log-section');
                 const dashboardContent = $('#main-dashboard-content');
                 const isVisible = section.is(':visible');
 
-                // Toggle visibility
                 section.toggle(!isVisible);
                 dashboardContent.toggle(isVisible);
 
-                // Change button text
                 $(this).text(isVisible ? 'Show Doctor Logs' : 'Back to Dashboard');
 
-                // Optionally scroll to top if showing logs
                 if (!isVisible) {
                     renderDoctorLogs();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             });
-
         });
-         window.addEventListener('DOMContentLoaded', function () {
-        $('#download-logs').on('click', async function () {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
 
-            const text = $('#doctor-logs-list').text().trim();
-            const lines = doc.splitTextToSize(text, 180); // Wrap text within page width
+        window.addEventListener('DOMContentLoaded', function () {
+            $('#download-logs').on('click', async function () {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
 
-            doc.setFontSize(12);
-            doc.text(lines, 10, 20); // (text, x, y)
+                const isARVariant = allUsers.some(user => user.game === "AR" && (user.variant === $('.variant-btn.active').data('variant') || $('.variant-btn.active').data('variant') === "all"));
+                const headers = [
+                    'Timestamp', 'Variant', 'Activity', 'Patient', 'Email', 'Phone', 'Game', 'Score'
+                ];
+                if (!isARSelected && !isARVariant) {
+                    headers.push('Discount');
+                }
 
-            const filename = `doctor_logs_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(filename);
+                const rows = $('#doctor-logs-table').find('tbody tr').map(function() {
+                    return $(this).find('td').map(function() {
+                        return $(this).text();
+                    }).get().join(' | ');
+                }).get().join('\n');
+
+                const text = 'Doctor Activity Logs\n\n' + headers.join(' | ') + '\n' + rows;
+                const lines = doc.splitTextToSize(text, 180);
+
+                doc.setFontSize(12);
+                doc.text(lines, 10, 20);
+
+                const filename = `doctor_logs_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(filename);
+            });
         });
-    });
     </script>
 </body>
 
