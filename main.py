@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
 from datetime import datetime, timedelta, timezone
+from fastapi.responses import JSONResponse
+from fastapi import status
 
 app = FastAPI()
 
@@ -29,7 +31,7 @@ def load_data():
         "Game1": {"users": {}, "scores": [], "user_counter": 0},
         "Game2": {"users": {}, "scores": [], "user_counter": 0},
         "Game3": {"users": {}, "scores": [], "user_counter": 0},
-        "AR": {"users": {}, "scores": [], "user_counter": 0}
+        "AR": {"users": {}, "phase_times": [], "user_counter": 0}
     }
 
 def save_data():
@@ -38,11 +40,18 @@ def save_data():
 
 data_store = load_data()
 
+# ------------------------
 # Pydantic Models
+# ------------------------
 class UserInput(BaseModel):
     name: str
     email: Optional[EmailStr] = None
     phone: str
+
+    @field_validator('phone', mode='before')
+    @classmethod
+    def convert_phone_to_string(cls, v):
+        return str(v)
 
     @model_validator(mode='before')
     @classmethod
@@ -68,16 +77,34 @@ class ScoreInput(BaseModel):
             raise ValueError("Discount must be between 0 and 100")
         return v
 
-class ARScoreInput(BaseModel):
+class ARPhaseTimeInput(BaseModel):
     player_id: str
-    score: int
+    phase: str
+    time_spent: float
 
     @field_validator('player_id', mode='before')
     @classmethod
     def convert_to_string(cls, v):
         return str(v)
 
-# Register dynamic game routes
+    @field_validator('phase')
+    @classmethod
+    def validate_phase(cls, v):
+        if v not in ["Girl", "Boy", "Aged Girl"]:
+            raise ValueError("Phase must be 'Girl', 'Boy', or 'Aged Girl'")
+        return v
+
+    @field_validator('time_spent')
+    @classmethod
+    def validate_time_spent(cls, v):
+        if v < 0:
+            raise ValueError("Time spent cannot be negative")
+        return v
+
+
+# ------------------------
+# Register Game Routes
+# ------------------------
 def register_game_routes(game_name: str):
     def create_user_route(prefix: str = ""):
         @app.post(f"/{game_name.lower()}/{prefix}save_user")
@@ -86,6 +113,7 @@ def register_game_routes(game_name: str):
             if "user_counter" not in game:
                 game["user_counter"] = 0
 
+            # Prevent duplicate phone/email
             for uid, user in game["users"].items():
                 if user["phone"] == data.phone or (data.email and user["email"] == data.email):
                     return {"message": f"{game_name} user already exists", "player_id": uid}
@@ -97,6 +125,7 @@ def register_game_routes(game_name: str):
             variant = (
                 "Doctor 1" if prefix == "doctor1/" else
                 "Doctor 2" if prefix == "doctor2/" else
+                "Doctor 3" if prefix == "doctor3/" else
                 "Main"
             )
 
@@ -107,7 +136,8 @@ def register_game_routes(game_name: str):
                 "phone": data.phone,
                 "scores": [],
                 "variant": variant,
-                "created_at": datetime.now(IST).isoformat(),
+                # ✅ Always safe ISO format with Z
+                "created_at": datetime.now(IST).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                 "game": game_name
             }
 
@@ -115,43 +145,75 @@ def register_game_routes(game_name: str):
             return {"message": f"{game_name} user saved", "player_id": _id}
 
     def create_score_route(prefix: str = ""):
-        # Use ARScoreInput for AR game, ScoreInput for others
-        score_model = ARScoreInput if game_name == "AR" else ScoreInput
+        if game_name == "AR":
+            @app.post(f"/{game_name.lower()}/{prefix}save_phase_time")
+            def save_phase_time(data: ARPhaseTimeInput = Body(...)):
+                game = data_store[game_name]
+                player_id = data.player_id
 
-        @app.patch(f"/{game_name.lower()}/{prefix}save_score")
-        def save_score(data: score_model = Body(...)):
-            game = data_store[game_name]
-            player_id = data.player_id
+                if player_id not in game["users"]:
+                    raise HTTPException(status_code=404, detail="User not found")
 
-            if player_id not in game["users"]:
-                raise HTTPException(status_code=404, detail="User not found")
+                user = game["users"][player_id]
+                IST = timezone(timedelta(hours=5, minutes=30))
+                phase_time_entry = {
+                    "player_id": player_id,
+                    "username": user["name"],
+                    "email": user["email"],
+                    "phone": user["phone"],
+                    "phase": data.phase,
+                    "time_spent": data.time_spent,
+                    "variant": user["variant"],
+                    "timestamp": datetime.now(IST).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                }
 
-            user = game["users"][player_id]
-            score_entry = {
-                "player_id": player_id,
-                "username": user["name"],
-                "email": user["email"],
-                "phone": user["phone"],
-                "finalScore": data.score
-            }
+                game["phase_times"].append(phase_time_entry)
+                user["scores"].append({
+                    "phase": data.phase,
+                    "time_spent": data.time_spent,
+                    "variant": user["variant"]
+                })
 
-            # Include discount in score_entry only for non-AR games if provided
-            if game_name != "AR" and hasattr(data, "discount") and data.discount is not None:
-                score_entry["discount"] = data.discount
+                save_data()
+                return {
+                    "message": f"{game_name} phase time saved",
+                    "phase_time": phase_time_entry,
+                    "updated_user_phase_times": user["scores"]
+                }
+        else:
+            @app.patch(f"/{game_name.lower()}/{prefix}save_score")
+            def save_score(data: ScoreInput = Body(...)):
+                game = data_store[game_name]
+                player_id = data.player_id
 
-            game["scores"].append(score_entry)
-            # Store score in user scores
-            user_score = {"score": data.score}
-            if game_name != "AR" and hasattr(data, "discount") and data.discount is not None:
-                user_score["discount"] = data.discount
-            user["scores"].append(user_score)
+                if player_id not in game["users"]:
+                    raise HTTPException(status_code=404, detail="User not found")
 
-            save_data()
-            return {
-                "message": f"{game_name} score saved",
-                "score": score_entry,
-                "updated_user_scores": user["scores"]
-            }
+                user = game["users"][player_id]
+                score_entry = {
+                    "player_id": player_id,
+                    "username": user["name"],
+                    "email": user["email"],
+                    "phone": user["phone"],
+                    "finalScore": data.score,
+                    "variant": user["variant"]
+                }
+
+                if hasattr(data, "discount") and data.discount is not None:
+                    score_entry["discount"] = data.discount
+
+                game["scores"].append(score_entry)
+                user_score = {"score": data.score}
+                if hasattr(data, "discount") and data.discount is not None:
+                    user_score["discount"] = data.discount
+                user["scores"].append(user_score)
+
+                save_data()
+                return {
+                    "message": f"{game_name} score saved",
+                    "score": score_entry,
+                    "updated_user_scores": user["scores"]
+                }
 
     def create_get_data_route(prefix: str = ""):
         @app.get(f"/{game_name.lower()}/{prefix}get_data")
@@ -171,7 +233,7 @@ def register_game_routes(game_name: str):
                     continue
                 if start_time or end_time:
                     try:
-                        created_at = datetime.fromisoformat(user["created_at"])
+                        created_at = datetime.fromisoformat(user["created_at"].replace("Z",""))
                     except ValueError:
                         continue
                     if start_time:
@@ -182,24 +244,37 @@ def register_game_routes(game_name: str):
                         end_dt = datetime.fromisoformat(end_time)
                         if created_at > end_dt:
                             continue
+
                 user_copy = user.copy()
-                if user["scores"]:
-                    if isinstance(user["scores"][0], dict):
-                        user_copy["score"] = max([s["score"] for s in user["scores"]])
-                    else:
-                        user_copy["score"] = max(user["scores"])
+                
+                if game_name == "AR":
+                    # Build phase times summary
+                    phase_times = {"Girl": 0.0, "Boy": 0.0, "Aged Girl": 0.0}
+                    for entry in user.get("scores", []):
+                        if "phase" in entry and "time_spent" in entry:
+                            phase_times[entry["phase"]] += entry["time_spent"]
+                    user_copy["phase_times"] = phase_times
+                    user_copy["total_time"] = sum(phase_times.values())
                 else:
-                    user_copy["score"] = "No Score"
+                    if user["scores"]:
+                        if isinstance(user["scores"][0], dict):
+                            user_copy["score"] = max([s["score"] for s in user["scores"]])
+                        else:
+                            user_copy["score"] = max(user["scores"])
+                    else:
+                        user_copy["score"] = "No Score"
+
                 if "variant" not in user_copy:
                     user_copy["variant"] = "Main"
                 users.append(user_copy)
 
             return {
                 "users": users,
-                "scores": game["scores"]
+                "data": game["phase_times" if game_name == "AR" else "scores"]
             }
 
-    for prefix in ["", "doctor1/", "doctor2/"]:
+    # Register routes with prefixes for doctor variants
+    for prefix in ["", "doctor1/", "doctor2/", "doctor3/"]:
         create_user_route(prefix)
         create_score_route(prefix)
         create_get_data_route(prefix)
@@ -208,26 +283,60 @@ def register_game_routes(game_name: str):
     def clear_data():
         game = data_store[game_name]
         game["users"] = {}
-        game["scores"] = []
+        game["scores" if game_name != "AR" else "phase_times"] = []
         game["user_counter"] = 0
         save_data()
         return {"message": f"{game_name} data cleared successfully"}
+
 
 # Register all games
 for game in ["Game1", "Game2", "Game3", "AR"]:
     register_game_routes(game)
 
+
+# ------------------------
+# Global Clear
+# ------------------------
 @app.delete("/clear_all_data")
 def clear_all_data():
     global data_store
-    data_store = load_data()
-    for game in data_store:
-        data_store[game]["users"] = {}
-        data_store[game]["scores"] = []
-        data_store[game]["user_counter"] = 0
+    for game_name, game in data_store.items():
+        game["users"] = {}
+        if game_name == "AR":
+            game["phase_times"] = []
+        else:
+            game["scores"] = []
+        game["user_counter"] = 0
     save_data()
     return {"message": "All game data cleared successfully"}
+def parse_datetime_safe(date_str: str):
+    """Safely parse ISO datetime strings with or without Z/offset"""
+    if not date_str:
+        return None
+    try:
+        if date_str.endswith("Z"):
+            date_str = date_str[:-1]
+        return datetime.fromisoformat(date_str)
+    except Exception:
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S")
+        except Exception:
+            return None
 
+
+# ------------------------
+# Global error handler (for debugging instead of silent 500)
+# ------------------------
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"error": str(exc)}
+    )
+
+# ------------------------
+# Root + Admin
+# ------------------------
 @app.get("/")
 def home():
     return {"message": "FastAPI backend is live 🚀"}
