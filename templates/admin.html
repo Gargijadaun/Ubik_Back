@@ -337,12 +337,20 @@
                 allUsers = results.flat();
                 if (allUsers.length === 0) {
                     console.warn("No data loaded from any game endpoints.");
+<<<<<<< HEAD
                     // Removed alert to allow empty table display without error popup
+=======
+                    alert("No data loaded. Ensure the FastAPI server is running and endpoints are accessible.");
+>>>>>>> 30334cfcf05d1da1e0e94023233f5fe539cfbcfa
                 }
                 renderTable();
             }).catch(error => {
                 console.error("Unexpected error in Promise.all:", error);
+<<<<<<< HEAD
                 // Removed alert to avoid unnecessary popups
+=======
+                alert("Failed to load data. Check console for details and ensure the FastAPI server is running.");
+>>>>>>> 30334cfcf05d1da1e0e94023233f5fe539cfbcfa
             });
         }
 
