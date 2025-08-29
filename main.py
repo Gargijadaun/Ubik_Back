@@ -29,7 +29,7 @@ def load_data():
         "Game1": {"users": {}, "scores": [], "user_counter": 0},
         "Game2": {"users": {}, "scores": [], "user_counter": 0},
         "Game3": {"users": {}, "scores": [], "user_counter": 0},
-        "AR": {"users": {}, "scores": [], "user_counter": 0}
+        "AR": {"users": {}, "user_counter": 0}  # No scores for AR
     }
 
 def save_data():
@@ -68,9 +68,9 @@ class ScoreInput(BaseModel):
             raise ValueError("Discount must be between 0 and 100")
         return v
 
-class ARScoreInput(BaseModel):
+class ARTimeInput(BaseModel):
     player_id: str
-    score: int
+    time_seconds: int  # Time spent in seconds
 
     @field_validator('player_id', mode='before')
     @classmethod
@@ -86,6 +86,7 @@ def register_game_routes(game_name: str):
             if "user_counter" not in game:
                 game["user_counter"] = 0
 
+            # Check if user exists
             for uid, user in game["users"].items():
                 if user["phone"] == data.phone or (data.email and user["email"] == data.email):
                     return {"message": f"{game_name} user already exists", "player_id": uid}
@@ -105,21 +106,23 @@ def register_game_routes(game_name: str):
                 "name": data.name,
                 "email": data.email,
                 "phone": data.phone,
-                "scores": [],
+                "scores": [] if game_name != "AR" else None,
                 "variant": variant,
                 "created_at": datetime.now(IST).isoformat(),
-                "game": game_name
+                "game": game_name,
+                "ar_times": {} if game_name == "AR" else None
             }
 
             save_data()
             return {"message": f"{game_name} user saved", "player_id": _id}
 
     def create_score_route(prefix: str = ""):
-        # Use ARScoreInput for AR game, ScoreInput for others
-        score_model = ARScoreInput if game_name == "AR" else ScoreInput
+        # Only create score endpoints for non-AR games
+        if game_name == "AR":
+            return
 
         @app.patch(f"/{game_name.lower()}/{prefix}save_score")
-        def save_score(data: score_model = Body(...)):
+        def save_score(data: ScoreInput = Body(...)):
             game = data_store[game_name]
             player_id = data.player_id
 
@@ -135,16 +138,11 @@ def register_game_routes(game_name: str):
                 "finalScore": data.score
             }
 
-            # Include discount in score_entry only for non-AR games if provided
-            if game_name != "AR" and hasattr(data, "discount") and data.discount is not None:
+            if data.discount is not None:
                 score_entry["discount"] = data.discount
 
             game["scores"].append(score_entry)
-            # Store score in user scores
-            user_score = {"score": data.score}
-            if game_name != "AR" and hasattr(data, "discount") and data.discount is not None:
-                user_score["discount"] = data.discount
-            user["scores"].append(user_score)
+            user["scores"].append({"score": data.score, "discount": data.discount} if data.discount else {"score": data.score})
 
             save_data()
             return {
@@ -152,6 +150,32 @@ def register_game_routes(game_name: str):
                 "score": score_entry,
                 "updated_user_scores": user["scores"]
             }
+
+    def create_ar_time_routes(prefix: str = ""):
+        # Only for AR game
+        if game_name != "AR":
+            return
+
+        endpoints = {
+            "girl": "save_time_girl",
+            "boy": "save_time_boy",
+            "old_girl": "save_time_old_girl"
+        }
+
+        for key, route in endpoints.items():
+            @app.patch(f"/{game_name.lower()}/{prefix}{route}", name=route)
+            def save_ar_time(data: ARTimeInput = Body(...), key=key):
+                game = data_store["AR"]
+                player_id = data.player_id
+
+                if player_id not in game["users"]:
+                    raise HTTPException(status_code=404, detail="User not found")
+
+                user = game["users"][player_id]
+                user["ar_times"][key] = data.time_seconds
+                save_data()
+                return {"message": f"Time for AR {key.replace('_',' ').title()} saved",
+                        "player_id": player_id, "time": data.time_seconds}
 
     def create_get_data_route(prefix: str = ""):
         @app.get(f"/{game_name.lower()}/{prefix}get_data")
@@ -183,32 +207,32 @@ def register_game_routes(game_name: str):
                         if created_at > end_dt:
                             continue
                 user_copy = user.copy()
-                if user["scores"]:
-                    if isinstance(user["scores"][0], dict):
+                if game_name != "AR":
+                    if user["scores"]:
                         user_copy["score"] = max([s["score"] for s in user["scores"]])
                     else:
-                        user_copy["score"] = max(user["scores"])
+                        user_copy["score"] = "No Score"
                 else:
-                    user_copy["score"] = "No Score"
-                if "variant" not in user_copy:
-                    user_copy["variant"] = "Main"
+                    user_copy["ar_times"] = user.get("ar_times", {})
                 users.append(user_copy)
 
             return {
                 "users": users,
-                "scores": game["scores"]
+                "scores": game.get("scores", [])
             }
 
     for prefix in ["", "doctor1/", "doctor2/"]:
         create_user_route(prefix)
         create_score_route(prefix)
+        create_ar_time_routes(prefix)
         create_get_data_route(prefix)
 
     @app.delete(f"/{game_name.lower()}/clear_data")
     def clear_data():
         game = data_store[game_name]
         game["users"] = {}
-        game["scores"] = []
+        if game_name != "AR":
+            game["scores"] = []
         game["user_counter"] = 0
         save_data()
         return {"message": f"{game_name} data cleared successfully"}
@@ -223,7 +247,8 @@ def clear_all_data():
     data_store = load_data()
     for game in data_store:
         data_store[game]["users"] = {}
-        data_store[game]["scores"] = []
+        if game != "AR":
+            data_store[game]["scores"] = []
         data_store[game]["user_counter"] = 0
     save_data()
     return {"message": "All game data cleared successfully"}
