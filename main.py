@@ -38,7 +38,9 @@ def save_data():
 
 data_store = load_data()
 
+# ------------------------
 # Pydantic Models
+# ------------------------
 class UserInput(BaseModel):
     name: str
     email: Optional[EmailStr] = None
@@ -97,7 +99,10 @@ class ARPhaseTimeInput(BaseModel):
             raise ValueError("Time spent cannot be negative")
         return v
 
-# Register dynamic game routes
+
+# ------------------------
+# Register Game Routes
+# ------------------------
 def register_game_routes(game_name: str):
     def create_user_route(prefix: str = ""):
         @app.post(f"/{game_name.lower()}/{prefix}save_user")
@@ -106,6 +111,7 @@ def register_game_routes(game_name: str):
             if "user_counter" not in game:
                 game["user_counter"] = 0
 
+            # Prevent duplicate phone/email
             for uid, user in game["users"].items():
                 if user["phone"] == data.phone or (data.email and user["email"] == data.email):
                     return {"message": f"{game_name} user already exists", "player_id": uid}
@@ -117,6 +123,7 @@ def register_game_routes(game_name: str):
             variant = (
                 "Doctor 1" if prefix == "doctor1/" else
                 "Doctor 2" if prefix == "doctor2/" else
+                "Doctor 3" if prefix == "doctor3/" else
                 "Main"
             )
 
@@ -159,7 +166,8 @@ def register_game_routes(game_name: str):
                 game["phase_times"].append(phase_time_entry)
                 user["scores"].append({
                     "phase": data.phase,
-                    "time_spent": data.time_spent
+                    "time_spent": data.time_spent,
+                    "variant": user["variant"]
                 })
 
                 save_data()
@@ -183,7 +191,8 @@ def register_game_routes(game_name: str):
                     "username": user["name"],
                     "email": user["email"],
                     "phone": user["phone"],
-                    "finalScore": data.score
+                    "finalScore": data.score,
+                    "variant": user["variant"]
                 }
 
                 if hasattr(data, "discount") and data.discount is not None:
@@ -231,17 +240,16 @@ def register_game_routes(game_name: str):
                         end_dt = datetime.fromisoformat(end_time)
                         if created_at > end_dt:
                             continue
+
                 user_copy = user.copy()
                 
                 if game_name == "AR":
-                    # Initialize phase times with 0 for each phase
+                    # Build phase times
                     phase_times = {"Girl": 0.0, "Boy": 0.0, "Aged Girl": 0.0}
-                    # Aggregate time spent for each phase
                     for entry in user["scores"]:
                         if "phase" in entry and "time_spent" in entry:
-                            phase_times[entry["phase"]] = entry["time_spent"]
+                            phase_times[entry["phase"]] += entry["time_spent"]
                     user_copy["phase_times"] = phase_times
-                    # Calculate total time for display
                     user_copy["total_time"] = sum(phase_times.values())
                 else:
                     if user["scores"]:
@@ -261,7 +269,8 @@ def register_game_routes(game_name: str):
                 "data": game["phase_times" if game_name == "AR" else "scores"]
             }
 
-    for prefix in ["", "doctor1/", "doctor2/"]:
+    # Register routes with prefixes for doctor variants
+    for prefix in ["", "doctor1/", "doctor2/", "doctor3/"]:
         create_user_route(prefix)
         create_score_route(prefix)
         create_get_data_route(prefix)
@@ -275,10 +284,15 @@ def register_game_routes(game_name: str):
         save_data()
         return {"message": f"{game_name} data cleared successfully"}
 
+
 # Register all games
 for game in ["Game1", "Game2", "Game3", "AR"]:
     register_game_routes(game)
 
+
+# ------------------------
+# Global Clear
+# ------------------------
 @app.delete("/clear_all_data")
 def clear_all_data():
     global data_store
@@ -290,6 +304,10 @@ def clear_all_data():
     save_data()
     return {"message": "All game data cleared successfully"}
 
+
+# ------------------------
+# Root + Admin
+# ------------------------
 @app.get("/")
 def home():
     return {"message": "FastAPI backend is live 🚀"}
