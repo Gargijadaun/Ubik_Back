@@ -206,11 +206,20 @@
       let requests = games.map(game => {
         return $.get(`${BASE_URL}/${game.toLowerCase()}/get_data`).then(data => {
           return data.users.map(user => {
+            // calculate total discount
+            let totalDiscount = 0;
+            if (Array.isArray(user.scores)) {
+              totalDiscount = user.scores.reduce((sum, s) => sum + (s.discount || 0), 0);
+            }
+
+            // you can also calculate average if needed
+            // let avgDiscount = user.scores.length ? totalDiscount / user.scores.length : 0;
+
             return {
               ...user,
               game: game,
-              score: user.score || "No Score",
-              discount: user.discount || "No Discount",
+              score: user.scores?.[0]?.score ?? "No Score",
+              discount: totalDiscount + "%",  // show percent
               ar_girl: user.ar_times?.girl || "N/A",
               ar_boy: user.ar_times?.boy || "N/A",
               ar_old_girl: user.ar_times?.old_girl || "N/A",
@@ -220,6 +229,7 @@
           });
         });
       });
+
 
       Promise.all(requests).then(results => {
         allUsers = results.flat();
