@@ -2,348 +2,312 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Ubik Admin Dashboard</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Ubik Admin Dashboard</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 
-    <!-- DataTables CSS + JS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+  <!-- DataTables CSS + JS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 30px;
-            background-color: #f9fafb;
-            color: #333;
-        }
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 30px;
+      background-color: #f9fafb;
+      color: #333;
+    }
 
-        h1 {
-            text-align: center;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 40px;
-            color: #1f2937;
-        }
+    h1 {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 40px;
+      color: #1f2937;
+    }
 
-        .dashboard-card {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
+    .dashboard-card {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
 
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-bottom: 30px;
-            justify-content: space-between;
-        }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+      justify-content: space-between;
+    }
 
-        .control-group {
-            display: flex;
-            flex-direction: column;
-        }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+    }
 
-        .controls label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 6px;
-        }
+    .controls label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+    }
 
-        .controls select,
-        .controls input[type="text"],
-        .controls input[type="date"] {
-            padding: 10px 14px;
-            font-size: 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            width: 200px;
-            background-color: #fff;
-            transition: border-color 0.2s ease-in-out;
-        }
+    .controls select,
+    .controls input[type="text"],
+    .controls input[type="date"] {
+      padding: 10px 14px;
+      font-size: 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      width: 200px;
+      background-color: #fff;
+      transition: border-color 0.2s ease-in-out;
+    }
 
-        .controls input:focus,
-        .controls select:focus {
-            border-color: #3b82f6;
-            outline: none;
-        }
+    .controls input:focus,
+    .controls select:focus {
+      border-color: #3b82f6;
+      outline: none;
+    }
 
-        table.dataTable {
-            border-collapse: collapse !important;
-            width: 100%;
-            font-size: 14px;
-            background-color: #fff;
-        }
+    table.dataTable {
+      border-collapse: collapse !important;
+      width: 100%;
+      font-size: 14px;
+      background-color: #fff;
+    }
 
-        table.dataTable thead {
-            background-color: #f3f4f6;
-            color: #111827;
-        }
+    table.dataTable thead {
+      background-color: #f3f4f6;
+      color: #111827;
+    }
 
-        table.dataTable th,
-        table.dataTable td {
-            padding: 12px 15px;
-            text-align: left;
-        }
+    table.dataTable th,
+    table.dataTable td {
+      padding: 12px 15px;
+      text-align: left;
+    }
 
-        table.dataTable tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-        }
+    table.dataTable tbody tr:nth-child(even) {
+      background-color: #f9fafb;
+    }
 
-        table.dataTable tbody tr:hover {
-            background-color: #e5e7eb;
-        }
+    table.dataTable tbody tr:hover {
+      background-color: #e5e7eb;
+    }
 
-        .dataTables_wrapper .dt-buttons {
-            margin-bottom: 20px;
-        }
+    .dt-button {
+      background-color: #2563eb;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      margin-right: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
 
-        .dt-button {
-            background-color: #2563eb;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            color: #fff;
-            font-size: 13px;
-            margin-right: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
+    .dt-button:hover {
+      background-color: #1d4ed8;
+    }
 
-        .dt-button:hover {
-            background-color: #1d4ed8;
-        }
+    .variant-btn {
+      background-color: #e5e7eb;
+      border: none;
+      padding: 8px 14px;
+      margin-right: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      font-weight: 500;
+    }
 
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .controls select,
-            .controls input {
-                width: 100%;
-            }
-        }
-    </style>
+    .variant-btn.active {
+      background-color: #2563eb;
+      color: white;
+    }
+  </style>
 </head>
 
 <body>
-    <h1>Ubik Admin Dashboard</h1>
-    <div class="dashboard-card">
-        <!-- Filters + Users Table -->
-        <div id="main-dashboard-content">
-            <div class="controls">
-                <div class="control-group">
-                    <label for="game-select">Select:</label>
-                    <select id="game-select">
-                        <option value="all">All</option>
-                        <option value="Game1">Skin Quiz</option>
-                        <option value="Game2">Hair Quest</option>
-                        <option value="Game3">Aging Quiz</option>
-                        <option value="AR">AR</option>
-                    </select>
-                </div>
+  <h1>Ubik Admin Dashboard</h1>
 
-                <div class="control-group">
-                    <label for="filter-id">Filter by ID:</label>
-                    <input type="text" id="filter-id" placeholder="User ID">
-                </div>
+  <!-- Doctor selection buttons -->
+  <div style="margin-bottom:20px;">
+    <button class="variant-btn active" data-variant="Main">Main</button>
+    <button class="variant-btn" data-variant="Doctor 1">Doctor 1</button>
+    <button class="variant-btn" data-variant="Doctor 2">Doctor 2</button>
+  </div>
 
-                <div class="control-group">
-                    <label for="filter-name">Filter by Name:</label>
-                    <input type="text" id="filter-name" placeholder="User Name">
-                </div>
-
-                <div class="control-group">
-                    <label for="start-date">Start Date:</label>
-                    <input type="date" id="start-date">
-                </div>
-
-                <div class="control-group">
-                    <label for="end-date">End Date:</label>
-                    <input type="date" id="end-date">
-                </div>
-            </div>
-
-            <table id="users-table" class="display nowrap" style="width:100%">
-                <thead id="users-table-head">
-                    <tr>
-                        <th>User ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th id="score-rating-header">Score/Rating</th>
-                        <th id="discount-header">Discount (%)</th>
-                        <th>Created At</th>
-                        <th>Doctor Variant</th>
-                    </tr>
-                </thead>
-                <tbody id="users-body"></tbody>
-            </table>
+  <div class="dashboard-card">
+    <div id="main-dashboard-content">
+      <div class="controls">
+        <div class="control-group">
+          <label for="game-select">Select:</label>
+          <select id="game-select">
+            <option value="all">All</option>
+            <option value="Game1">Skin Quiz</option>
+            <option value="Game2">Hair Quest</option>
+            <option value="Game3">Aging Quiz</option>
+            <option value="AR">AR</option>
+          </select>
         </div>
+
+        <div class="control-group">
+          <label for="filter-id">Filter by ID:</label>
+          <input type="text" id="filter-id" placeholder="User ID">
+        </div>
+
+        <div class="control-group">
+          <label for="filter-name">Filter by Name:</label>
+          <input type="text" id="filter-name" placeholder="User Name">
+        </div>
+
+        <div class="control-group">
+          <label for="start-date">Start Date:</label>
+          <input type="date" id="start-date">
+        </div>
+
+        <div class="control-group">
+          <label for="end-date">End Date:</label>
+          <input type="date" id="end-date">
+        </div>
+      </div>
+
+      <table id="users-table" class="display nowrap" style="width:100%">
+        <thead id="users-table-head">
+          <tr>
+            <th>User ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th id="score-rating-header">Score/Rating</th>
+            <th id="discount-header">Discount (%)</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody id="users-body"></tbody>
+      </table>
     </div>
+  </div>
 
-    <script>
-        let allUsers = [];
-        let dataTable;
-        let isARSelected = false;
+  <script>
+    let allUsers = [];
+    let currentVariant = "Main";
+    let dataTable;
+    let isARSelected = false;
 
-        function loadData(selectedGame) {
-            isARSelected = selectedGame === "AR";
-            const games = selectedGame === "all" ? ["Game1", "Game2", "Game3", "AR"] : [selectedGame];
-            const BASE_URL = 'https://ubikback-production.up.railway.app';
+    function loadData(selectedGame) {
+      isARSelected = selectedGame === "AR";
+      const games = selectedGame === "all" ? ["Game1", "Game2", "Game3", "AR"] : [selectedGame];
+      const BASE_URL = 'https://ubikback-production.up.railway.app';
 
-            let requests = games.map(game => {
-                const isAR = game === 'AR';
-                const gameNames = {
-                    Game1: "Skin Quiz",
-                    Game2: "Hair Quest",
-                    Game3: "Aging Quiz",
-                    AR: "AR"
-                };
+      let requests = games.map(game => {
+        return $.get(`${BASE_URL}/${game.toLowerCase()}/get_data`).then(data => {
+          return data.users.map(user => {
+            const rawDate = user.created_at;
+            let parsedDate = moment(rawDate, moment.ISO_8601, true).isValid()
+              ? moment(rawDate).toDate()
+              : new Date(0);
 
-                return $.get(`${BASE_URL}/${game.toLowerCase()}/get_data`)
-                    .then(data => {
-                        return data.users.map(user => {
-                            const rawDate = user.created_at;
-                            const formats = [
-                                'YYYY-MM-DDTHH:mm:ssZ',
-                                'YYYY-MM-DD HH:mm:ss',
-                                'DD/MM/YYYY HH:mm:ss',
-                                'DD/MM/YYYY h:mm:ss A',
-                                'YYYY-MM-DDTHH:mm:ss',
-                                'DD-MM-YYYY HH:mm:ss',
-                                'MM/DD/YYYY HH:mm:ss',
-                                'MM/DD/YYYY h:mm:ss A',
-                                'YYYY-MM-DD',
-                                'DD/MM/YYYY',
-                                'DD-MM-YYYY',
-                                'MM/DD/YYYY'
-                            ];
-                            let parsedDate = null;
-                            if (rawDate) {
-                                for (const format of formats) {
-                                    const momentDate = moment(rawDate, format, true);
-                                    if (momentDate.isValid()) {
-                                        parsedDate = momentDate.toDate();
-                                        break;
-                                    }
-                                }
-                                if (!parsedDate) {
-                                    const momentDate = moment(rawDate);
-                                    if (momentDate.isValid()) {
-                                        parsedDate = momentDate.toDate();
-                                    }
-                                }
-                            }
-                            parsedDate = parsedDate || new Date(0);
-                            const displayDate = parsedDate.getTime() !== 0 ? moment(parsedDate).format('DD/MM/YYYY HH:mm:ss') : `Invalid: ${rawDate || 'null'}`;
-
-                            return {
-                                ...user,
-                                game: gameNames[game] || game,
-                                displayValue: isAR
-                                    ? (user.rating || "No Rating")
-                                    : (user.score || (user.scores && user.scores.length > 0
-                                        ? Math.max(...user.scores.map(s => typeof s === 'number' ? s : s.score))
-                                        : "No Score")),
-                                discount: isAR ? "No Discount" : (user.scores && user.scores.length > 0
-                                    ? (typeof user.scores[user.scores.length - 1] === 'number'
-                                        ? "No Discount"
-                                        : (user.scores[user.scores.length - 1].discount != null
-                                            ? user.scores[user.scores.length - 1].discount + "%"
-                                            : "No Discount"))
-                                    : "No Discount"),
-                                created_at: parsedDate,
-                                timestamp: parsedDate.getTime(),
-                                display_date: displayDate
-                            };
-                        });
-                    });
-            });
-
-            Promise.all(requests).then(results => {
-                allUsers = results.flat();
-                $('#score-rating-header').text(selectedGame === 'AR' ? 'Rating' : 'Score');
-                renderTable();
-            }).catch(error => {
-                console.error("API error:", error);
-                alert("Failed to load data from one or more sources.");
-            });
-        }
-
-        function renderTable() {
-            const idFilter = $('#filter-id').val().toLowerCase();
-            const nameFilter = $('#filter-name').val().toLowerCase();
-            const startDate = $('#start-date').val() ? new Date($('#start-date').val()) : null;
-            const endDate = $('#end-date').val() ? new Date(new Date($('#end-date').val()).setHours(23, 59, 59, 999)) : null;
-
-            const filtered = allUsers.filter(user => {
-                const idMatch = user.id?.toString().toLowerCase().includes(idFilter);
-                const nameMatch = user.name?.toLowerCase().includes(nameFilter);
-                const createdAt = user.created_at;
-                let dateMatch = true;
-
-                if (startDate && createdAt && createdAt.getTime() !== 0) dateMatch = dateMatch && createdAt >= startDate;
-                if (endDate && createdAt && createdAt.getTime() !== 0) dateMatch = dateMatch && createdAt <= endDate;
-
-                return idMatch && nameMatch && dateMatch;
-            });
-
-            filtered.sort((a, b) => b.timestamp - a.timestamp);
-
-            if ($.fn.DataTable.isDataTable('#users-table')) {
-                $('#users-table').DataTable().clear().destroy();
-            }
-
-            $('#users-body').empty();
-
-            filtered.forEach(user => {
-                $('#users-body').append(`
-                    <tr>
-                        <td>${user.id}</td>
-                        <td>${user.name || ''}</td>
-                        <td>${user.email || ''}</td>
-                        <td>${user.phone || ''}</td>
-                        <td>${user.displayValue}</td>
-                        <td>${user.discount}</td>
-                        <td data-order="${user.timestamp}">${user.display_date}</td>
-                        <td>${user.variant}</td>
-                    </tr>
-                `);
-            });
-
-            dataTable = $('#users-table').DataTable({
-                dom: 'Bfrtip',
-                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
-                responsive: true,
-                order: [[6, 'desc']]
-            });
-        }
-
-        $(document).ready(function () {
-            loadData($('#game-select').val());
-
-            $('#game-select, #filter-id, #filter-name, #start-date, #end-date').on('input change', function () {
-                if (this.id === 'game-select') {
-                    loadData($(this).val());
-                } else {
-                    renderTable();
-                }
-            });
+            return {
+              ...user,
+              game: game,
+              displayValue: isARSelected ? (user.rating || "No Rating") : (user.score || "No Score"),
+              discount: isARSelected ? "No Discount" : (user.discount || "No Discount"),
+              created_at: parsedDate,
+              timestamp: parsedDate.getTime(),
+              display_date: parsedDate.getTime() ? moment(parsedDate).format('DD/MM/YYYY HH:mm:ss') : "Invalid Date"
+            };
+          });
         });
-    </script>
+      });
+
+      Promise.all(requests).then(results => {
+        allUsers = results.flat();
+        $('#score-rating-header').text(selectedGame === 'AR' ? 'Rating' : 'Score');
+        renderTable();
+      });
+    }
+
+    function renderTable() {
+      const idFilter = $('#filter-id').val().toLowerCase();
+      const nameFilter = $('#filter-name').val().toLowerCase();
+      const startDate = $('#start-date').val() ? new Date($('#start-date').val()) : null;
+      const endDate = $('#end-date').val() ? new Date(new Date($('#end-date').val()).setHours(23, 59, 59, 999)) : null;
+
+      const filtered = allUsers.filter(user => {
+        const idMatch = user.id?.toString().toLowerCase().includes(idFilter);
+        const nameMatch = user.name?.toLowerCase().includes(nameFilter);
+        const variantMatch = !currentVariant || user.variant === currentVariant;
+        const createdAt = user.created_at;
+        let dateMatch = true;
+
+        if (startDate && createdAt) dateMatch = dateMatch && createdAt >= startDate;
+        if (endDate && createdAt) dateMatch = dateMatch && createdAt <= endDate;
+
+        return idMatch && nameMatch && variantMatch && dateMatch;
+      });
+
+      filtered.sort((a, b) => b.timestamp - a.timestamp);
+
+      if ($.fn.DataTable.isDataTable('#users-table')) {
+        $('#users-table').DataTable().clear().destroy();
+      }
+
+      $('#users-body').empty();
+      filtered.forEach(user => {
+        $('#users-body').append(`
+          <tr>
+            <td>${user.id}</td>
+            <td>${user.name || ''}</td>
+            <td>${user.email || ''}</td>
+            <td>${user.phone || ''}</td>
+            <td>${user.displayValue}</td>
+            <td>${user.discount}</td>
+            <td data-order="${user.timestamp}">${user.display_date}</td>
+          </tr>
+        `);
+      });
+
+      dataTable = $('#users-table').DataTable({
+        dom: 'Bfrtip',
+        buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+        responsive: true,
+        order: [[6, 'desc']]
+      });
+    }
+
+    $(document).ready(function () {
+      loadData($('#game-select').val());
+
+      $('#game-select, #filter-id, #filter-name, #start-date, #end-date').on('input change', function () {
+        if (this.id === 'game-select') {
+          loadData($(this).val());
+        } else {
+          renderTable();
+        }
+      });
+
+      $(document).on('click', '.variant-btn', function () {
+        currentVariant = $(this).data('variant');
+        $('.variant-btn').removeClass('active');
+        $(this).addClass('active');
+        renderTable();
+      });
+    });
+  </script>
 </body>
+
 </html>
