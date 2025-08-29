@@ -159,36 +159,8 @@
     "user_counter": 3
   },
   "AR": {
-    "users": {
-      "0": {
-        "id": "0",
-        "name": "Jad",
-        "email": "gargi@metaverse911.rs",
-        "phone": "875059440",
-        "phase_times": {
-          "Girl": 12.5,
-          "Boy": 10.2,
-          "Aged Girl": 8.7
-        },
-        "total_time": 31.4,
-        "variant": "Doctor 1",
-        "created_at": "2025-08-29T12:15:00.000+05:30"
-      },
-      "1": {
-        "id": "1",
-        "name": "uuu",
-        "email": "uuu@gmail.com",
-        "phone": "1123324345",
-        "phase_times": {
-          "Girl": 20.0,
-          "Boy": 15.5,
-          "Aged Girl": 13.3
-        },
-        "total_time": 48.8,
-        "variant": "Doctor 2",
-        "created_at": "2025-08-29T12:30:00.000+05:30"
-      }
-    },
-    "user_counter": 2
+    "users": {},
+    "scores": [],
+    "user_counter": 0
   }
 }
