@@ -201,7 +201,7 @@
 
     function loadData(selectedGame) {
       const games = selectedGame === "all" ? ["Game1", "Game2", "Game3", "AR"] : [selectedGame];
-      const BASE_URL = 'http://127.0.0.1:8000';
+      const BASE_URL = 'https://ubikback-production.up.railway.app';
 
       let requests = games.map(game => {
         return $.get(`${BASE_URL}/${game.toLowerCase()}/get_data`).then(data => {
