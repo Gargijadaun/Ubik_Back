@@ -17,7 +17,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         body {
@@ -126,26 +125,6 @@
             background-color: #1d4ed8;
         }
 
-        .variant-btn {
-            background-color: #e5e7eb;
-            border: none;
-            padding: 8px 14px;
-            margin-right: 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-weight: 500;
-        }
-
-        .variant-btn:hover {
-            background-color: #d1d5db;
-        }
-
-        .variant-btn.active {
-            background-color: #2563eb;
-            color: white;
-        }
-
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -162,11 +141,8 @@
 
 <body>
     <h1>Ubik Admin Dashboard</h1>
-    <div style="text-align: center; margin-bottom: 20px;">
-        <button id="toggle-logs" class="dt-button">Show Doctor Logs</button>
-    </div>
     <div class="dashboard-card">
-        <!-- Wrapped Filters + Table -->
+        <!-- Filters + Users Table -->
         <div id="main-dashboard-content">
             <div class="controls">
                 <div class="control-group">
@@ -188,16 +164,6 @@
                 <div class="control-group">
                     <label for="filter-name">Filter by Name:</label>
                     <input type="text" id="filter-name" placeholder="User Name">
-                </div>
-
-                <div class="control-group">
-                    <label for="variant-filter">Variant:</label>
-                    <select id="variant-filter">
-                        <option value="">All</option>
-                        <option value="Main">Main</option>
-                        <option value="Doctor 1">Doctor 1</option>
-                        <option value="Doctor 2">Doctor 2</option>
-                    </select>
                 </div>
 
                 <div class="control-group">
@@ -227,40 +193,11 @@
                 <tbody id="users-body"></tbody>
             </table>
         </div>
-
-        <!-- Doctor Log Section -->
-        <div id="doctor-log-section" style="display: none; margin-top: 50px;">
-            <h2 style="font-size: 24px;">Doctor Activity Logs</h2>
-            <div id="doctor-controls" style="margin-bottom: 20px;">
-                <button class="variant-btn" data-variant="all">View All Logs</button>
-                <button class="variant-btn" data-variant="Doctor 1">View Doctor 1 Logs</button>
-                <button class="variant-btn" data-variant="Doctor 2">View Doctor 2 Logs</button>
-                <button class="variant-btn" data-variant="Main">View Main Logs</button>
-                <button id="download-logs" class="dt-button" style="margin-left: auto;">Download Logs</button>
-            </div>
-            <table id="doctor-logs-table" class="display nowrap" style="width:100%">
-                <thead id="doctor-logs-table-head">
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>Variant</th>
-                        <th>Activity</th>
-                        <th>Patient</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Game</th>
-                        <th>Score</th>
-                        <th id="doctor-discount-header">Discount</th>
-                    </tr>
-                </thead>
-                <tbody id="doctor-logs-body"></tbody>
-            </table>
-        </div>
     </div>
 
     <script>
         let allUsers = [];
         let dataTable;
-        let doctorLogsTable;
         let isARSelected = false;
 
         function loadData(selectedGame) {
@@ -280,68 +217,58 @@
                 return $.get(`${BASE_URL}/${game.toLowerCase()}/get_data`)
                     .then(data => {
                         return data.users.map(user => {
-                            // Parse date with moment.js, trying multiple formats
                             const rawDate = user.created_at;
-                            console.log(`Raw date for user ${user.id}: ${rawDate}`); // Debugging
                             const formats = [
-                                'YYYY-MM-DDTHH:mm:ssZ',      // ISO (e.g., 2025-08-11T16:00:00Z)
-                                'YYYY-MM-DD HH:mm:ss',       // Standard (e.g., 2025-08-11 16:00:00)
-                                'DD/MM/YYYY HH:mm:ss',       // DD/MM/YYYY (e.g., 11/08/2025 16:00:00)
-                                'DD/MM/YYYY h:mm:ss A',      // 12-hour (e.g., 11/08/2025 4:00:00 PM)
-                                'YYYY-MM-DDTHH:mm:ss',       // No TZ (e.g., 2025-08-11T16:00:00)
-                                'DD-MM-YYYY HH:mm:ss',       // Alternate (e.g., 11-08-2025 16:00:00)
-                                'MM/DD/YYYY HH:mm:ss',       // US format (e.g., 08/11/2025 16:00:00)
-                                'MM/DD/YYYY h:mm:ss A',      // US 12-hour (e.g., 08/11/2025 4:00:00 PM)
-                                'YYYY-MM-DD',                // Date only (e.g., 2025-08-11)
-                                'DD/MM/YYYY',                // Date only (e.g., 11/08/2025)
-                                'DD-MM-YYYY',                // Date only (e.g., 11-08-2025)
-                                'MM/DD/YYYY'                 // US date only (e.g., 08/11/2025)
+                                'YYYY-MM-DDTHH:mm:ssZ',
+                                'YYYY-MM-DD HH:mm:ss',
+                                'DD/MM/YYYY HH:mm:ss',
+                                'DD/MM/YYYY h:mm:ss A',
+                                'YYYY-MM-DDTHH:mm:ss',
+                                'DD-MM-YYYY HH:mm:ss',
+                                'MM/DD/YYYY HH:mm:ss',
+                                'MM/DD/YYYY h:mm:ss A',
+                                'YYYY-MM-DD',
+                                'DD/MM/YYYY',
+                                'DD-MM-YYYY',
+                                'MM/DD/YYYY'
                             ];
                             let parsedDate = null;
                             if (rawDate) {
-                                // Try strict parsing with defined formats
                                 for (const format of formats) {
                                     const momentDate = moment(rawDate, format, true);
                                     if (momentDate.isValid()) {
                                         parsedDate = momentDate.toDate();
-                                        console.log(`Parsed date for user ${user.id}: ${parsedDate.toISOString()} (Format: ${format})`); // Debugging
                                         break;
                                     }
                                 }
-                                // Fallback to loose parsing if strict fails
                                 if (!parsedDate) {
                                     const momentDate = moment(rawDate);
                                     if (momentDate.isValid()) {
                                         parsedDate = momentDate.toDate();
-                                        console.log(`Parsed date for user ${user.id}: ${parsedDate.toISOString()} (Loose parsing)`); // Debugging
                                     }
                                 }
                             }
                             parsedDate = parsedDate || new Date(0);
                             const displayDate = parsedDate.getTime() !== 0 ? moment(parsedDate).format('DD/MM/YYYY HH:mm:ss') : `Invalid: ${rawDate || 'null'}`;
-                            if (parsedDate.getTime() === 0) {
-                                console.warn(`Invalid date for user ${user.id}: ${rawDate || 'null'}`); // Debugging
-                            }
 
                             return {
                                 ...user,
                                 game: gameNames[game] || game,
                                 displayValue: isAR
                                     ? (user.rating || "No Rating")
-                                    : (user.score || (user.scores && user.scores.length > 0 
-                                        ? Math.max(...user.scores.map(s => typeof s === 'number' ? s : s.score)) 
+                                    : (user.score || (user.scores && user.scores.length > 0
+                                        ? Math.max(...user.scores.map(s => typeof s === 'number' ? s : s.score))
                                         : "No Score")),
-                                discount: isAR ? "No Discount" : (user.scores && user.scores.length > 0 
-                                    ? (typeof user.scores[user.scores.length - 1] === 'number' 
-                                        ? "No Discount" 
-                                        : (user.scores[user.scores.length - 1].discount != null 
-                                            ? user.scores[user.scores.length - 1].discount + "%" 
+                                discount: isAR ? "No Discount" : (user.scores && user.scores.length > 0
+                                    ? (typeof user.scores[user.scores.length - 1] === 'number'
+                                        ? "No Discount"
+                                        : (user.scores[user.scores.length - 1].discount != null
+                                            ? user.scores[user.scores.length - 1].discount + "%"
                                             : "No Discount"))
                                     : "No Discount"),
                                 created_at: parsedDate,
                                 timestamp: parsedDate.getTime(),
-                                raw_date: rawDate, // Store raw date for display if invalid
-                                display_date: displayDate // Store formatted date or raw if invalid
+                                display_date: displayDate
                             };
                         });
                     });
@@ -351,53 +278,35 @@
                 allUsers = results.flat();
                 $('#score-rating-header').text(selectedGame === 'AR' ? 'Rating' : 'Score');
                 renderTable();
-                renderDoctorLogs();
             }).catch(error => {
                 console.error("API error:", error);
-                alert("Failed to load data from one or more sources. Check console for details and ensure the FastAPI server is running.");
+                alert("Failed to load data from one or more sources.");
             });
         }
 
         function renderTable() {
             const idFilter = $('#filter-id').val().toLowerCase();
             const nameFilter = $('#filter-name').val().toLowerCase();
-            const variantFilter = $('#variant-filter').val();
             const startDate = $('#start-date').val() ? new Date($('#start-date').val()) : null;
             const endDate = $('#end-date').val() ? new Date(new Date($('#end-date').val()).setHours(23, 59, 59, 999)) : null;
 
             const filtered = allUsers.filter(user => {
                 const idMatch = user.id?.toString().toLowerCase().includes(idFilter);
                 const nameMatch = user.name?.toLowerCase().includes(nameFilter);
-                const variantMatch = !variantFilter || user.variant === variantFilter;
                 const createdAt = user.created_at;
                 let dateMatch = true;
 
                 if (startDate && createdAt && createdAt.getTime() !== 0) dateMatch = dateMatch && createdAt >= startDate;
                 if (endDate && createdAt && createdAt.getTime() !== 0) dateMatch = dateMatch && createdAt <= endDate;
 
-                return idMatch && nameMatch && variantMatch && dateMatch;
+                return idMatch && nameMatch && dateMatch;
             });
 
-            // Sort by timestamp in descending order (newest first)
             filtered.sort((a, b) => b.timestamp - a.timestamp);
 
             if ($.fn.DataTable.isDataTable('#users-table')) {
                 $('#users-table').DataTable().clear().destroy();
             }
-
-            $('#users-table-head').empty();
-            $('#users-table-head').append(`
-                <tr>
-                    <th>User ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th id="score-rating-header">${isARSelected ? 'Rating' : 'Score'}</th>
-                    <th id="discount-header">Discount (%)</th>
-                    <th>Created At</th>
-                    <th>Doctor Variant</th>
-                </tr>
-            `);
 
             $('#users-body').empty();
 
@@ -420,160 +329,21 @@
                 dom: 'Bfrtip',
                 buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
                 responsive: true,
-                order: [[6, 'desc']], // Sort by Created At column (index 6) in descending order
-                columnDefs: [
-                    {
-                        targets: 6, // Created At column
-                        type: 'num', // Use numeric sorting based on timestamp
-                        render: function (data, type, row) {
-                            return data;
-                        }
-                    }
-                ]
-            });
-        }
-
-        function renderDoctorLogs(selectedVariant = "all") {
-            const logs = [];
-
-            allUsers.forEach(user => {
-                if (user.variant && (selectedVariant === "all" || user.variant === selectedVariant)) {
-                    logs.push({
-                        time: user.created_at,
-                        timestamp: user.timestamp,
-                        raw_date: user.raw_date,
-                        display_date: user.display_date,
-                        variant: user.variant,
-                        activity: "Played game",
-                        name: user.name || 'N/A',
-                        email: user.email || 'N/A',
-                        phone: user.phone || 'N/A',
-                        game: user.game || "Unknown",
-                        score: user.displayValue || 'N/A',
-                        discount: user.discount || 'No Discount'
-                    });
-                }
-            });
-
-            // Sort logs by timestamp in descending order (newest first)
-            logs.sort((a, b) => b.timestamp - a.timestamp);
-
-            if ($.fn.DataTable.isDataTable('#doctor-logs-table')) {
-                $('#doctor-logs-table').DataTable().clear().destroy();
-            }
-
-            $('#doctor-logs-table-head').empty();
-            $('#doctor-logs-table-head').append(`
-                <tr>
-                    <th>Timestamp</th>
-                    <th>Variant</th>
-                    <th>Activity</th>
-                    <th>Patient</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Game</th>
-                    <th>Score</th>
-                    <th id="doctor-discount-header">Discount</th>
-                </tr>
-            `);
-
-            $('#doctor-logs-body').empty();
-
-            logs.forEach(log => {
-                $('#doctor-logs-body').append(`
-                    <tr>
-                        <td data-order="${log.timestamp}">${log.display_date}</td>
-                        <td>${log.variant}</td>
-                        <td>${log.activity}</td>
-                        <td>${log.name}</td>
-                        <td>${log.email}</td>
-                        <td>${log.phone}</td>
-                        <td>${log.game}</td>
-                        <td>${log.score}</td>
-                        <td>${log.discount}</td>
-                    </tr>
-                `);
-            });
-
-            doctorLogsTable = $('#doctor-logs-table').DataTable({
-                dom: 'Bfrtip',
-                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
-                responsive: true,
-                order: [[0, 'desc']], // Sort by Timestamp column (index 0) in descending order
-                columnDefs: [
-                    {
-                        targets: 0, // Timestamp column
-                        type: 'num', // Use numeric sorting based on timestamp
-                        render: function (data, type, row) {
-                            return data;
-                        }
-                    }
-                ]
+                order: [[6, 'desc']]
             });
         }
 
         $(document).ready(function () {
             loadData($('#game-select').val());
 
-            $('#game-select, #filter-id, #filter-name, #start-date, #end-date, #variant-filter').on('input change', function () {
+            $('#game-select, #filter-id, #filter-name, #start-date, #end-date').on('input change', function () {
                 if (this.id === 'game-select') {
                     loadData($(this).val());
                 } else {
                     renderTable();
                 }
             });
-
-            $(document).on('click', '.variant-btn', function () {
-                const selectedVariant = $(this).data('variant');
-                renderDoctorLogs(selectedVariant);
-
-                $('.variant-btn').removeClass('active');
-                $(this).addClass('active');
-            });
-
-            $('#toggle-logs').on('click', function () {
-                const section = $('#doctor-log-section');
-                const dashboardContent = $('#main-dashboard-content');
-                const isVisible = section.is(':visible');
-
-                section.toggle(!isVisible);
-                dashboardContent.toggle(isVisible);
-
-                $(this).text(isVisible ? 'Show Doctor Logs' : 'Back to Dashboard');
-
-                if (!isVisible) {
-                    renderDoctorLogs();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            });
-        });
-
-        window.addEventListener('DOMContentLoaded', function () {
-            $('#download-logs').on('click', async function () {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-
-                const headers = [
-                    'Timestamp', 'Variant', 'Activity', 'Patient', 'Email', 'Phone', 'Game', 'Score', 'Discount'
-                ];
-
-                const rows = $('#doctor-logs-table').find('tbody tr').map(function() {
-                    return $(this).find('td').map(function() {
-                        return $(this).text();
-                    }).get().join(' | ');
-                }).get().join('\n');
-
-                const text = 'Doctor Activity Logs\n\n' + headers.join(' | ') + '\n' + rows;
-                const lines = doc.splitTextToSize(text, 180);
-
-                doc.setFontSize(12);
-                doc.text(lines, 10, 20);
-
-                const filename = `doctor_logs_${new Date().toISOString().split('T')[0]}.pdf`;
-                doc.save(filename);
-            });
         });
     </script>
 </body>
-
 </html>
