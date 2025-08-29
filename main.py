@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
 from datetime import datetime, timedelta, timezone
+from fastapi.responses import JSONResponse
+from fastapi import status
 
 app = FastAPI()
 
@@ -134,7 +136,8 @@ def register_game_routes(game_name: str):
                 "phone": data.phone,
                 "scores": [],
                 "variant": variant,
-                "created_at": datetime.now(IST).isoformat(),
+                # ✅ Always safe ISO format with Z
+                "created_at": datetime.now(IST).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                 "game": game_name
             }
 
@@ -152,6 +155,7 @@ def register_game_routes(game_name: str):
                     raise HTTPException(status_code=404, detail="User not found")
 
                 user = game["users"][player_id]
+                IST = timezone(timedelta(hours=5, minutes=30))
                 phase_time_entry = {
                     "player_id": player_id,
                     "username": user["name"],
@@ -160,7 +164,7 @@ def register_game_routes(game_name: str):
                     "phase": data.phase,
                     "time_spent": data.time_spent,
                     "variant": user["variant"],
-                    "timestamp": datetime.now(timezone(timedelta(hours=5, minutes=30))).isoformat()
+                    "timestamp": datetime.now(IST).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                 }
 
                 game["phase_times"].append(phase_time_entry)
@@ -229,7 +233,7 @@ def register_game_routes(game_name: str):
                     continue
                 if start_time or end_time:
                     try:
-                        created_at = datetime.fromisoformat(user["created_at"])
+                        created_at = datetime.fromisoformat(user["created_at"].replace("Z",""))
                     except ValueError:
                         continue
                     if start_time:
@@ -244,9 +248,9 @@ def register_game_routes(game_name: str):
                 user_copy = user.copy()
                 
                 if game_name == "AR":
-                    # Build phase times
+                    # Build phase times summary
                     phase_times = {"Girl": 0.0, "Boy": 0.0, "Aged Girl": 0.0}
-                    for entry in user["scores"]:
+                    for entry in user.get("scores", []):
                         if "phase" in entry and "time_spent" in entry:
                             phase_times[entry["phase"]] += entry["time_spent"]
                     user_copy["phase_times"] = phase_times
@@ -296,14 +300,39 @@ for game in ["Game1", "Game2", "Game3", "AR"]:
 @app.delete("/clear_all_data")
 def clear_all_data():
     global data_store
-    data_store = load_data()
-    for game in data_store:
+    for game_name, game in data_store.items():
         game["users"] = {}
-        game["scores" if game != "AR" else "phase_times"] = []
+        if game_name == "AR":
+            game["phase_times"] = []
+        else:
+            game["scores"] = []
         game["user_counter"] = 0
     save_data()
     return {"message": "All game data cleared successfully"}
+def parse_datetime_safe(date_str: str):
+    """Safely parse ISO datetime strings with or without Z/offset"""
+    if not date_str:
+        return None
+    try:
+        if date_str.endswith("Z"):
+            date_str = date_str[:-1]
+        return datetime.fromisoformat(date_str)
+    except Exception:
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S")
+        except Exception:
+            return None
 
+
+# ------------------------
+# Global error handler (for debugging instead of silent 500)
+# ------------------------
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"error": str(exc)}
+    )
 
 # ------------------------
 # Root + Admin

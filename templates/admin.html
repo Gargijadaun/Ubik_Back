@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Ubik Admin Dashboard</title>
-<!-- jQuery -->
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Moment.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <!-- DataTables -->
@@ -23,177 +22,31 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
 
-
-
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 30px;
-            background-color: #f9fafb;
-            color: #333;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 40px;
-            color: #1f2937;
-        }
-
-        .dashboard-card {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-bottom: 30px;
-            align-items: flex-start;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .controls label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 6px;
-        }
-
-        .controls select,
-        .controls input[type="text"],
-        .controls input[type="date"] {
-            padding: 10px 14px;
-            font-size: 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            width: 200px;
-            background-color: #fff;
-            transition: border-color 0.2s ease-in-out;
-        }
-
-        .controls input:focus,
-        .controls select:focus {
-            border-color: #3b82f6;
-            outline: none;
-        }
-
-        table.dataTable {
-            border-collapse: collapse !important;
-            width: 100%;
-            font-size: 14px;
-            background-color: #fff;
-        }
-
-        table.dataTable thead {
-            background-color: #f3f4f6;
-            color: #111827;
-        }
-
-        table.dataTable th,
-        table.dataTable td {
-            padding: 12px 15px;
-            text-align: left;
-        }
-
-        table.dataTable tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-        }
-
-        table.dataTable tbody tr:hover {
-            background-color: #e5e7eb;
-        }
-
-        .dataTables_wrapper .dt-buttons {
-            margin-bottom: 20px;
-        }
-
-        .dt-button {
-            background-color: #2563eb;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            color: #fff;
-            font-size: 13px;
-            margin-right: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .dt-button:hover {
-            background-color: #1d4ed8;
-        }
-
-        .variant-btn {
-            background-color: #e5e7eb;
-            border: none;
-            padding: 8px 14px;
-            margin-right: 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-weight: 500;
-            font-size: 13px;
-        }
-
-        .variant-btn:hover {
-            background-color: #d1d5db;
-        }
-
-        .variant-btn.active {
-            background-color: #2563eb;
-            color: white;
-        }
-
-        .variant-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .variant-controls label {
-            margin-right: 10px;
-        }
-
-        .filter-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            flex-grow: 1;
-        }
-
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .controls select,
-            .controls input {
-                width: 100%;
-            }
-
-            .variant-controls {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .variant-btn {
-                margin-right: 0;
-                margin-bottom: 8px;
-                width: 100%;
-                text-align: left;
-            }
-        }
+        /* (Keeping your CSS the same for design) */
+        body {font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:30px;background-color:#f9fafb;color:#333;}
+        h1 {text-align:center;font-size:32px;font-weight:700;margin-bottom:40px;color:#1f2937;}
+        .dashboard-card {background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);}
+        .controls {display:flex;flex-wrap:wrap;gap:20px;margin-bottom:30px;align-items:flex-start;}
+        .control-group {display:flex;flex-direction:column;}
+        .controls label {font-size:14px;font-weight:500;color:#374151;margin-bottom:6px;}
+        .controls select,.controls input[type="text"],.controls input[type="date"]{padding:10px 14px;font-size:14px;border:1px solid #d1d5db;border-radius:8px;width:200px;background:#fff;transition:border-color .2s}
+        .controls input:focus,.controls select:focus{border-color:#3b82f6;outline:none}
+        table.dataTable {border-collapse:collapse!important;width:100%;font-size:14px;background:#fff;}
+        table.dataTable thead {background:#f3f4f6;color:#111827;}
+        table.dataTable th,table.dataTable td{padding:12px 15px;text-align:left;}
+        table.dataTable tbody tr:nth-child(even){background:#f9fafb;}
+        table.dataTable tbody tr:hover{background:#e5e7eb;}
+        .dataTables_wrapper .dt-buttons {margin-bottom:20px;}
+        .dt-button {background:#2563eb;border:none;padding:8px 12px;border-radius:6px;color:#fff;font-size:13px;margin-right:6px;cursor:pointer;transition:.2s}
+        .dt-button:hover {background:#1d4ed8;}
+        .variant-btn {background:#e5e7eb;border:none;padding:8px 14px;margin-right:8px;border-radius:6px;cursor:pointer;transition:.2s;font-weight:500;font-size:13px;}
+        .variant-btn:hover {background:#d1d5db;}
+        .variant-btn.active {background:#2563eb;color:#fff;}
+        .variant-controls {display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+        .variant-controls label {margin-right:10px;}
+        .filter-controls {display:flex;flex-wrap:wrap;gap:20px;flex-grow:1;}
+        @media (max-width:768px){.controls{flex-direction:column;gap:15px}.controls select,.controls input{width:100%}.variant-controls{flex-direction:column;align-items:flex-start}.variant-btn{margin-right:0;margin-bottom:8px;width:100%;text-align:left}}
     </style>
 </head>
 
@@ -249,122 +102,113 @@
         let allUsers = [];
         let dataTable;
         let selectedGame = "all";
-function loadData(game) {
-    selectedGame = game;
-    const isAllSelected = game === "all";
-    const isARSelected = game === "AR";
-    const games = isAllSelected ? ["Game1", "Game2", "Game3", "AR"] : [game];
-    const BASE_URL = 'https://ubikback-production.up.railway.app';
 
-    let requests = games.map(game => {
-        const isAR = game === 'AR';
-        const gameNames = {
-            Game1: "Skin Quiz",
-            Game2: "Hair Quest",
-            Game3: "Aging Quiz",
-            AR: "AR"
-        };
+        function loadData(game) {
+            selectedGame = game;
+            const isAllSelected = game === "all";
+            const games = isAllSelected ? ["Game1", "Game2", "Game3", "AR"] : [game];
+            const BASE_URL = 'https://ubikback-production.up.railway.app';
 
-        return $.get(`${BASE_URL}/${game.toLowerCase()}/get_data?_=${new Date().getTime()}`)
-            .then(data => {
-                console.log(`Raw API response for ${game}:`, JSON.stringify(data, null, 2));
-                if (!data.users) {
-                    console.error(`No 'users' array in response for ${game}`);
-                    return [];
-                }
-                return data.users.map(user => {
-                    const rawDate = user.created_at;
-                    console.log(`Raw date for user ${user.id}: ${rawDate}`);
-                    const formats = [
-                        'YYYY-MM-DDTHH:mm:ss.SSSSSSZ', // For precise timestamps
-                        'YYYY-MM-DDTHH:mm:ssZ',
-                        'YYYY-MM-DD HH:mm:ss',
-                        'DD/MM/YYYY HH:mm:ss',
-                        'DD/MM/YYYY h:mm:ss A',
-                        'YYYY-MM-DDTHH:mm:ss',
-                        'DD-MM-YYYY HH:mm:ss',
-                        'MM/DD/YYYY HH:mm:ss',
-                        'MM/DD/YYYY h:mm:ss A',
-                        'YYYY-MM-DD',
-                        'DD/MM/YYYY',
-                        'DD-MM-YYYY',
-                        'MM/DD/YYYY'
-                    ];
-                    let parsedDate = null;
-                    if (rawDate) {
-                        for (const format of formats) {
-                            const momentDate = moment(rawDate, format, true);
-                            if (momentDate.isValid()) {
-                                parsedDate = momentDate.toDate();
-                                console.log(`Parsed date for user ${user.id}: ${parsedDate.toISOString()} (Format: ${format})`);
-                                break;
-                            }
+            let requests = games.map(game => {
+                const isAR = game === 'AR';
+                const gameNames = { Game1:"Skin Quiz", Game2:"Hair Quest", Game3:"Aging Quiz", AR:"AR" };
+
+                return $.get(`${BASE_URL}/${game.toLowerCase()}/get_data?_=${new Date().getTime()}`)
+                    .then(data => {
+                        console.log(`Raw API response for ${game}:`, data);
+
+                        let rawUsers = [];
+
+                        // ✅ Flexible handling for both formats
+                        if (Array.isArray(data.users)) {
+                            rawUsers = data.users;
+                        } else if (data.users && typeof data.users === "object") {
+                            rawUsers = Object.values(data.users);
+                        } else if (Array.isArray(data.data)) {
+                            rawUsers = data.data;
+                        } else {
+                            console.warn(`No valid 'users' or 'data' in response for ${game}`);
+                            return [];
                         }
-                        if (!parsedDate) {
-                            const momentDate = moment(rawDate);
-                            if (momentDate.isValid()) {
-                                parsedDate = momentDate.toDate();
-                                console.log(`Parsed date for user ${user.id}: ${parsedDate.toISOString()} (Loose parsing)`);
-                            }
-                        }
-                    }
-                    parsedDate = parsedDate || new Date(0);
-                    const displayDate = parsedDate.getTime() !== 0 ? moment(parsedDate).format('DD/MM/YYYY HH:mm:ss') : `Invalid: ${rawDate || 'null'}`;
-                    if (parsedDate.getTime() === 0) {
-                        console.warn(`Invalid date for user ${user.id}: ${rawDate || 'null'}`);
-                    }
 
-                    return {
-                        ...user,
-                        game: gameNames[game] || game,
-                        displayValue: isAR ? (user.total_time || 0.0) : (user.score || (user.scores && user.scores.length > 0 
-                            ? Math.max(...user.scores.map(s => typeof s === 'number' ? s : s.score)) 
-                            : "No Score")),
-                        discount: isAR ? "N/A" : (user.scores && user.scores.length > 0 
-                            ? (typeof user.scores[user.scores.length - 1] === 'number' 
-                                ? "No Discount" 
-                                : (user.scores[user.scores.length - 1].discount != null 
-                                    ? user.scores[user.scores.length - 1].discount + "%" 
-                                    : "No Discount"))
-                            : "No Discount"),
-                        girlTime: isAR ? (user.phase_times?.Girl || 0.0) : "N/A",
-                        boyTime: isAR ? (user.phase_times?.Boy || 0.0) : "N/A",
-                        agedGirlTime: isAR ? (user.phase_times?.['Aged Girl'] || 0.0) : "N/A",
-                        totalTime: isAR ? (user.total_time || 0.0) : "N/A",
-                        created_at: parsedDate,
-                        timestamp: parsedDate.getTime(),
-                        raw_date: rawDate,
-                        display_date: displayDate
-                    };
-                });
-            })
-            .catch(error => {
-                console.error(`Error fetching data for ${game}:`, error);
-                return [];
+                        return rawUsers.map(user => {
+                            const rawDate = user.created_at;
+                            let parsedDate = null;
+
+                            if (rawDate) {
+                                const formats = [
+                                    'YYYY-MM-DDTHH:mm:ss.SSSSSSZ',
+                                    'YYYY-MM-DDTHH:mm:ssZ',
+                                    'YYYY-MM-DD HH:mm:ss',
+                                    'DD/MM/YYYY HH:mm:ss',
+                                    'DD/MM/YYYY h:mm:ss A',
+                                    'YYYY-MM-DDTHH:mm:ss',
+                                    'DD-MM-YYYY HH:mm:ss',
+                                    'MM/DD/YYYY HH:mm:ss',
+                                    'MM/DD/YYYY h:mm:ss A',
+                                    'YYYY-MM-DD',
+                                    'DD/MM/YYYY',
+                                    'DD-MM-YYYY',
+                                    'MM/DD/YYYY'
+                                ];
+                                for (const f of formats) {
+                                    const m = moment(rawDate, f, true);
+                                    if (m.isValid()) { parsedDate = m.toDate(); break; }
+                                }
+                                if (!parsedDate) {
+                                    const loose = moment(rawDate);
+                                    if (loose.isValid()) parsedDate = loose.toDate();
+                                }
+                            }
+                            parsedDate = parsedDate || new Date(0);
+                            const displayDate = parsedDate.getTime() !== 0 ? moment(parsedDate).format('DD/MM/YYYY HH:mm:ss') : `Invalid: ${rawDate||'null'}`;
+
+                            return {
+                                ...user,
+                                game: gameNames[game] || game,
+                                displayValue: isAR ? (user.total_time || 0.0) : (user.score || (user.scores && user.scores.length > 0 
+                                    ? Math.max(...user.scores.map(s => typeof s === 'number' ? s : s.score)) 
+                                    : "No Score")),
+                                discount: isAR ? "N/A" : (user.scores && user.scores.length > 0 
+                                    ? (typeof user.scores[user.scores.length - 1] === 'number' 
+                                        ? "No Discount" 
+                                        : (user.scores[user.scores.length - 1].discount != null 
+                                            ? user.scores[user.scores.length - 1].discount + "%" 
+                                            : "No Discount"))
+                                    : "No Discount"),
+                                girlTime: isAR ? (user.phase_times?.Girl || 0.0) : "N/A",
+                                boyTime: isAR ? (user.phase_times?.Boy || 0.0) : "N/A",
+                                agedGirlTime: isAR ? (user.phase_times?.['Aged Girl'] || 0.0) : "N/A",
+                                totalTime: isAR ? (user.total_time || 0.0) : "N/A",
+                                created_at: parsedDate,
+                                timestamp: parsedDate.getTime(),
+                                raw_date: rawDate,
+                                display_date: displayDate
+                            };
+                        });
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching data for ${game}:`, error);
+                        return [];
+                    });
             });
-    });
 
-    Promise.all(requests).then(results => {
-        allUsers = results.flat();
-        console.log('Combined users:', allUsers);
-        if (allUsers.length === 0) {
-            console.warn("No data loaded from any game endpoints.");
+            Promise.all(requests).then(results => {
+                allUsers = results.flat();
+                renderTable();
+            }).catch(error => {
+                console.error("Unexpected error in Promise.all:", error);
+            });
         }
-        renderTable();
-    }).catch(error => {
-        console.error("Unexpected error in Promise.all:", error);
-    });
-}
 
         function renderTable() {
             const isAllSelected = selectedGame === "all";
             const isARSelected = selectedGame === "AR";
-            const isNonARSelected = !isAllSelected && !isARSelected;
             const idFilter = $('#filter-id').val().toLowerCase();
             const nameFilter = $('#filter-name').val().toLowerCase();
             const variantFilter = $('.variant-btn.active').data('variant') || 'Main';
             const startDate = $('#start-date').val() ? new Date($('#start-date').val()) : null;
-            const endDate = $('#end-date').val() ? new Date(new Date($('#end-date').val()).setHours(23, 59, 59, 999)) : null;
+            const endDate = $('#end-date').val() ? new Date(new Date($('#end-date').val()).setHours(23,59,59,999)) : null;
 
             const filtered = allUsers.filter(user => {
                 const idMatch = user.id?.toString().toLowerCase().includes(idFilter);
@@ -372,125 +216,63 @@ function loadData(game) {
                 const variantMatch = user.variant === variantFilter;
                 const createdAt = user.created_at;
                 let dateMatch = true;
-
                 if (startDate && createdAt && createdAt.getTime() !== 0) dateMatch = dateMatch && createdAt >= startDate;
                 if (endDate && createdAt && createdAt.getTime() !== 0) dateMatch = dateMatch && createdAt <= endDate;
-
                 return idMatch && nameMatch && variantMatch && dateMatch;
             });
 
-            filtered.sort((a, b) => b.timestamp - a.timestamp);
+            filtered.sort((a,b)=>b.timestamp-a.timestamp);
 
             if ($.fn.DataTable.isDataTable('#users-table')) {
                 $('#users-table').DataTable().clear().destroy();
-                $('#users-body').empty();
-                $('#users-table-head').empty();
+                $('#users-body').empty(); $('#users-table-head').empty();
             }
 
             let headerRow = `
                 <tr>
-                    <th>User ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-            `;
+                    <th>User ID</th><th>Name</th><th>Email</th><th>Phone</th>`;
             if (!isAllSelected) {
                 if (isARSelected) {
-                    headerRow += `
-                        <th id="girl-time-header">Girl Time (s)</th>
-                        <th id="boy-time-header">Boy Time (s)</th>
-                        <th id="aged-girl-time-header">Aged Girl Time (s)</th>
-                        <th id="total-time-header">Total Time (s)</th>
-                    `;
+                    headerRow += `<th>Girl Time (s)</th><th>Boy Time (s)</th><th>Aged Girl Time (s)</th><th>Total Time (s)</th>`;
                 } else {
-                    headerRow += `
-                        <th id="score-header">Score</th>
-                        <th id="discount-header">Discount (%)</th>
-                    `;
+                    headerRow += `<th>Score</th><th>Discount (%)</th>`;
                 }
             }
-            headerRow += `
-                <th>Created At</th>
-                <th>Doctor Variant</th>
-            </tr>
-            `;
+            headerRow += `<th>Created At</th><th>Doctor Variant</th></tr>`;
             $('#users-table-head').append(headerRow);
 
-            $('#users-body').empty();
-
             filtered.forEach(user => {
-                let row = `
-                    <tr>
-                        <td>${user.id || ''}</td>
-                        <td>${user.name || ''}</td>
-                        <td>${user.email || ''}</td>
-                        <td>${user.phone || ''}</td>
-                `;
+                let row = `<tr>
+                    <td>${user.id||''}</td><td>${user.name||''}</td><td>${user.email||''}</td><td>${user.phone||''}</td>`;
                 if (!isAllSelected) {
                     if (isARSelected) {
-                        row += `
-                            <td>${user.girlTime}</td>
-                            <td>${user.boyTime}</td>
-                            <td>${user.agedGirlTime}</td>
-                            <td>${user.totalTime}</td>
-                        `;
+                        row += `<td>${user.girlTime}</td><td>${user.boyTime}</td><td>${user.agedGirlTime}</td><td>${user.totalTime}</td>`;
                     } else {
-                        row += `
-                            <td>${user.displayValue}</td>
-                            <td>${user.discount}</td>
-                        `;
+                        row += `<td>${user.displayValue}</td><td>${user.discount}</td>`;
                     }
                 }
-                row += `
-                    <td data-order="${user.timestamp}">${user.display_date}</td>
-                    <td>${user.variant || 'Main'}</td>
-                </tr>
-                `;
+                row += `<td data-order="${user.timestamp}">${user.display_date}</td><td>${user.variant||'Main'}</td></tr>`;
                 $('#users-body').append(row);
             });
 
-            const columnCount = isAllSelected ? 6 : (isARSelected ? 10 : 8);
             const createdAtIndex = isAllSelected ? 4 : (isARSelected ? 8 : 6);
 
             dataTable = $('#users-table').DataTable({
-                dom: 'Bfrtip',
-                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
-                responsive: true,
-                order: [[createdAtIndex, 'desc']],
-                columnDefs: [
-                    {
-                        targets: createdAtIndex,
-                        type: 'num',
-                        render: function (data, type, row) {
-                            return data;
-                        }
-                    }
-                ],
-                drawCallback: function () {
-                    console.log(`Table rendered with ${columnCount} columns for game: ${selectedGame}`);
-                }
+                dom:'Bfrtip',buttons:['copy','csv','excel','pdf','print'],
+                responsive:true,order:[[createdAtIndex,'desc']],
+                columnDefs:[{targets:createdAtIndex,type:'num',render:(d)=>d}]
             });
         }
 
         $(document).ready(function () {
             loadData($('#game-select').val());
-
             $('#game-select, #filter-id, #filter-name, #start-date, #end-date').on('input change', function () {
-                if (this.id === 'game-select') {
-                    loadData($(this).val());
-                } else {
-                    renderTable();
-                }
+                if (this.id === 'game-select') loadData($(this).val()); else renderTable();
             });
-
             $(document).on('click', '.variant-btn', function () {
-                const selectedVariant = $(this).data('variant');
-                $('.variant-btn').removeClass('active');
-                $(this).addClass('active');
-                renderTable();
+                $('.variant-btn').removeClass('active'); $(this).addClass('active'); renderTable();
             });
         });
     </script>
 </body>
-
 </html>
