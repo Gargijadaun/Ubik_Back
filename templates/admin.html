@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Ubik Admin Dashboard</title>
+  <title>UBIK Admin Dashboard</title>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
@@ -137,7 +137,7 @@
 </head>
 
 <body>
-  <h1>Ubik Admin Dashboard</h1>
+  <h1>UBIK Admin Dashboard</h1>
 
   <div style="margin-bottom:20px;">
     <button class="variant-btn active" data-variant="Main">Main</button>
@@ -182,7 +182,8 @@
           <th>Name</th>
           <th>Email</th>
           <th>Phone</th>
-          <th id="score-rating-header">Score/Rating</th>
+          <th>Game</th>
+          <th id="score-rating-header">Score</th>
           <th id="discount-header">Discount (%)</th>
           <th>Skin Time</th>
           <th>Hair Loss Time</th>
@@ -212,24 +213,29 @@
               totalDiscount = user.scores.reduce((sum, s) => sum + (s.discount || 0), 0);
             }
 
-            // you can also calculate average if needed
-            // let avgDiscount = user.scores.length ? totalDiscount / user.scores.length : 0;
+            // Map game names for display
+            const gameDisplayNames = {
+              'Game1': 'Skin Quiz',
+              'Game2': 'Hair Quest',
+              'Game3': 'Aging Quiz',
+              'AR': 'AR'
+            };
 
             return {
               ...user,
               game: game,
+              game_display: gameDisplayNames[game] || game,
               score: user.scores?.[0]?.score ?? "No Score",
-              discount: totalDiscount + "%",  // show percent
-              ar_girl: user.ar_times?.girl || "N/A",
-              ar_boy: user.ar_times?.boy || "N/A",
-              ar_old_girl: user.ar_times?.old_girl || "N/A",
+              discount: totalDiscount + "%",
+              ar_girl: user.ar_times?.girl || "0",
+              ar_boy: user.ar_times?.boy || "0",
+              ar_old_girl: user.ar_times?.old_girl || "0",
               created_at_date: moment(user.created_at).isValid() ? moment(user.created_at).toDate() : new Date(0),
               display_date: moment(user.created_at).isValid() ? moment(user.created_at).format('DD/MM/YYYY HH:mm:ss') : "Invalid Date"
             };
           });
         });
       });
-
 
       Promise.all(requests).then(results => {
         allUsers = results.flat();
@@ -266,7 +272,8 @@
         <th>User ID</th>
         <th>Name</th>
         <th>Email</th>
-        <th>Phone</th>`;
+        <th>Phone</th>
+        <th>Game</th>`;
 
       if (!isAllSelected) {
         if (isARSelected) {
@@ -274,7 +281,7 @@
                            <th>Hair Loss Time</th>
                            <th>Ageing Time</th>`;
         } else {
-          headerHtml += `<th id="score-rating-header">Score/Rating</th>
+          headerHtml += `<th id="score-rating-header">Score</th>
                            <th id="discount-header">Discount (%)</th>`;
         }
       }
@@ -288,13 +295,14 @@
             <td>${user.id}</td>
             <td>${user.name || ''}</td>
             <td>${user.email || ''}</td>
-            <td>${user.phone || ''}</td>`;
+            <td>${user.phone || ''}</td>
+            <td>${user.game_display}</td>`;
 
         if (!isAllSelected) {
           if (isARSelected) {
-            rowHtml += `<td>${user.ar_girl}</td>
-                            <td>${user.ar_boy}</td>
-                            <td>${user.ar_old_girl}</td>`;
+            rowHtml += `<td>${user.ar_girl !== "0" ? user.ar_girl + "s" : "0s"}</td>
+                            <td>${user.ar_boy !== "0" ? user.ar_boy + "s" : "0s"}</td>
+                            <td>${user.ar_old_girl !== "0" ? user.ar_old_girl + "s" : "0s"}</td>`;
           } else {
             rowHtml += `<td>${user.score}</td>
                             <td>${user.discount}</td>`;
@@ -309,10 +317,9 @@
         dom: 'Bfrtip',
         buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
         responsive: true,
-        order: [[isAllSelected ? 4 : (isARSelected ? 4 : 6), 'desc']]
+        order: [[isAllSelected ? 5 : (isARSelected ? 5 : 7), 'desc']]
       });
     }
-
 
     $(document).ready(function () {
       loadData($('#game-select').val());
