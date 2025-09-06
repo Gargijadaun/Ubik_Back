@@ -21,6 +21,7 @@ app.add_middleware(
 
 DATA_FILE = "game_data.json"
 
+
 def load_data():
     if os.path.exists(DATA_FILE) and os.path.getsize(DATA_FILE) > 0:
         with open(DATA_FILE, "r") as f:
@@ -32,11 +33,14 @@ def load_data():
         "AR": {"users": {}, "user_counter": 0}  # No scores for AR
     }
 
+
 def save_data():
     with open(DATA_FILE, "w") as f:
         json.dump(data_store, f, indent=2, default=str)
 
+
 data_store = load_data()
+
 
 # Pydantic Models
 class UserInput(BaseModel):
@@ -50,6 +54,7 @@ class UserInput(BaseModel):
         if "email" in values and values["email"] == "":
             values["email"] = None
         return values
+
 
 class ScoreInput(BaseModel):
     player_id: str
@@ -68,6 +73,7 @@ class ScoreInput(BaseModel):
             raise ValueError("Discount must be between 0 and 100")
         return v
 
+
 class ARTimeInput(BaseModel):
     player_id: str
     time_seconds: int  # Time spent in seconds
@@ -76,6 +82,7 @@ class ARTimeInput(BaseModel):
     @classmethod
     def convert_to_string(cls, v):
         return str(v)
+
 
 # Register dynamic game routes
 def register_game_routes(game_name: str):
@@ -86,11 +93,7 @@ def register_game_routes(game_name: str):
             if "user_counter" not in game:
                 game["user_counter"] = 0
 
-            # Check if user exists
-            for uid, user in game["users"].items():
-                if user["phone"] == data.phone or (data.email and user["email"] == data.email):
-                    return {"message": f"{game_name} user already exists", "player_id": uid}
-
+            # Always create new login (no duplicate check)
             _id = str(game["user_counter"])
             game["user_counter"] += 1
 
@@ -142,7 +145,9 @@ def register_game_routes(game_name: str):
                 score_entry["discount"] = data.discount
 
             game["scores"].append(score_entry)
-            user["scores"].append({"score": data.score, "discount": data.discount} if data.discount else {"score": data.score})
+            user["scores"].append(
+                {"score": data.score, "discount": data.discount} if data.discount else {"score": data.score}
+            )
 
             save_data()
             return {
@@ -174,8 +179,11 @@ def register_game_routes(game_name: str):
                 user = game["users"][player_id]
                 user["ar_times"][key] = data.time_seconds
                 save_data()
-                return {"message": f"Time for AR {key.replace('_',' ').title()} saved",
-                        "player_id": player_id, "time": data.time_seconds}
+                return {
+                    "message": f"Time for AR {key.replace('_', ' ').title()} saved",
+                    "player_id": player_id,
+                    "time": data.time_seconds
+                }
 
     def create_get_data_route(prefix: str = ""):
         @app.get(f"/{game_name.lower()}/{prefix}get_data")
@@ -237,9 +245,11 @@ def register_game_routes(game_name: str):
         save_data()
         return {"message": f"{game_name} data cleared successfully"}
 
+
 # Register all games
 for game in ["Game1", "Game2", "Game3", "AR"]:
     register_game_routes(game)
+
 
 @app.delete("/clear_all_data")
 def clear_all_data():
@@ -253,11 +263,14 @@ def clear_all_data():
     save_data()
     return {"message": "All game data cleared successfully"}
 
+
 @app.get("/")
 def home():
     return {"message": "FastAPI backend is live 🚀"}
 
+
 templates = Jinja2Templates(directory="templates")
+
 
 @app.get("/admin", response_class=HTMLResponse)
 async def serve_admin(request: Request):
